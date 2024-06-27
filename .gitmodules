@@ -1,0 +1,9 @@
+[submodule "3rd_party/libdeflate"]
+	path = 3rd_party/libdeflate
+	url = https://github.com/refresh-bio-dependencies/libdeflate.git
+[submodule "3rd_party/isa-l"]
+	path = 3rd_party/isa-l
+	url = https://github.com/refresh-bio-dependencies/isa-l.git
+[submodule "3rd_party/zlib-ng"]
+	path = 3rd_party/zlib-ng
+	url = https://github.com/refresh-bio-dependencies/zlib-ng.git
