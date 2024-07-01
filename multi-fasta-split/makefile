@@ -84,7 +84,7 @@ libdeflate:
 	cd $(LIBDEFLATE_DIR) && cmake -B build && cmake --build build
 	cp $(LIBDEFLATE_DIR)/build/libdeflate.* $(MFS_LIBS_DIR)
 
-%.o: %.cpp
+%.o: %.cpp $(gz_target)
 	$(CXX) $(CFLAGS) -c $< -o $@
 
 
