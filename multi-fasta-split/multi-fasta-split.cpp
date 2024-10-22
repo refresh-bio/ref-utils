@@ -10,7 +10,10 @@
 using namespace std;
 using namespace refresh;
 
-const string UTIL_VER = "multi-fasta-split v. 1.0 (2024-02-16)";
+const string UTIL_VER = "multi-fasta-split v. 1.0.1 (2024-10-22)";
+const string UTIL_VERSION = "1.0.1";
+
+enum class working_mode_t { none, splitting };
 
 string in_name;
 string out_prefix = "part";
@@ -21,6 +24,7 @@ int64_t n = 1000;
 int part_digits = 5;
 bool remove_empty_lines = false;
 int verbosity = 0;
+working_mode_t working_mode = working_mode_t::none;
 
 const size_t IN_BUF_SIZE = 64 << 20;
 vector<uint8_t> in_buf;
@@ -40,7 +44,13 @@ bool parse_args(int argc, char** argv)
 	if (argc < 2)
 		return false;
 
-	in_name = argv[argc - 1];
+	if (argv[1] == "--version"s)
+	{
+		cerr << UTIL_VERSION << endl;
+		return true;
+	}
+
+	working_mode = working_mode_t::splitting;	in_name = argv[argc - 1];
 
 	for (int i = 1; i < argc - 1; ++i)
 	{
@@ -243,6 +253,9 @@ int main(int argc, char** argv)
 		usage();
 		return 0;
 	}
+
+	if (working_mode == working_mode_t::none)
+		return 0;
 
 	process();
 
