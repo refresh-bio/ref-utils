@@ -4,8 +4,8 @@
 #include <cstdio>
 #include <cstring>
 
-#include "../libs/refresh/gz_wrapper.h"
-#include "../libs/refresh/file_wrapper.h"
+#include "../libs/refresh/compression/lib/gz_wrapper.h"
+#include "../libs/refresh/compression/lib/file_wrapper.h"
 
 using namespace std;
 using namespace refresh;

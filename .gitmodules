@@ -7,3 +7,6 @@
 [submodule "3rd_party/zlib-ng"]
 	path = 3rd_party/zlib-ng
 	url = https://github.com/refresh-bio-dependencies/zlib-ng.git
+[submodule "3rd_party/mimalloc"]
+	path = 3rd_party/mimalloc
+	url = https://github.com/refresh-bio-dependencies/mimalloc.git

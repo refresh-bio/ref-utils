@@ -13,6 +13,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "isa-l-vc", "3rd_party\isa-l
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libdeflate_static", "3rd_party\libdeflate\build-vs\libdeflate_static.vcxproj", "{0DF64642-6604-30B0-9FFA-1BB593BA2CB1}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mfasta-tool", "mfasta-tool\mfasta-tool.vcxproj", "{8EC48DCD-BCB8-4898-AA4B-B9308ECBF615}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0DF64642-6604-30B0-9FFA-1BB593BA2CB1} = {0DF64642-6604-30B0-9FFA-1BB593BA2CB1}
+		{68837F79-3D7F-4F4A-AF10-99383B70F7A9} = {68837F79-3D7F-4F4A-AF10-99383B70F7A9}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -73,6 +79,22 @@ Global
 		{0DF64642-6604-30B0-9FFA-1BB593BA2CB1}.RelWithDebInfo|x64.Build.0 = RelWithDebInfo|x64
 		{0DF64642-6604-30B0-9FFA-1BB593BA2CB1}.RelWithDebInfo|x86.ActiveCfg = RelWithDebInfo|x64
 		{0DF64642-6604-30B0-9FFA-1BB593BA2CB1}.RelWithDebInfo|x86.Build.0 = RelWithDebInfo|x64
+		{8EC48DCD-BCB8-4898-AA4B-B9308ECBF615}.Debug|x64.ActiveCfg = Debug|x64
+		{8EC48DCD-BCB8-4898-AA4B-B9308ECBF615}.Debug|x64.Build.0 = Debug|x64
+		{8EC48DCD-BCB8-4898-AA4B-B9308ECBF615}.Debug|x86.ActiveCfg = Debug|Win32
+		{8EC48DCD-BCB8-4898-AA4B-B9308ECBF615}.Debug|x86.Build.0 = Debug|Win32
+		{8EC48DCD-BCB8-4898-AA4B-B9308ECBF615}.MinSizeRel|x64.ActiveCfg = Debug|x64
+		{8EC48DCD-BCB8-4898-AA4B-B9308ECBF615}.MinSizeRel|x64.Build.0 = Debug|x64
+		{8EC48DCD-BCB8-4898-AA4B-B9308ECBF615}.MinSizeRel|x86.ActiveCfg = Debug|Win32
+		{8EC48DCD-BCB8-4898-AA4B-B9308ECBF615}.MinSizeRel|x86.Build.0 = Debug|Win32
+		{8EC48DCD-BCB8-4898-AA4B-B9308ECBF615}.Release|x64.ActiveCfg = Release|x64
+		{8EC48DCD-BCB8-4898-AA4B-B9308ECBF615}.Release|x64.Build.0 = Release|x64
+		{8EC48DCD-BCB8-4898-AA4B-B9308ECBF615}.Release|x86.ActiveCfg = Release|Win32
+		{8EC48DCD-BCB8-4898-AA4B-B9308ECBF615}.Release|x86.Build.0 = Release|Win32
+		{8EC48DCD-BCB8-4898-AA4B-B9308ECBF615}.RelWithDebInfo|x64.ActiveCfg = Release|x64
+		{8EC48DCD-BCB8-4898-AA4B-B9308ECBF615}.RelWithDebInfo|x64.Build.0 = Release|x64
+		{8EC48DCD-BCB8-4898-AA4B-B9308ECBF615}.RelWithDebInfo|x86.ActiveCfg = Release|Win32
+		{8EC48DCD-BCB8-4898-AA4B-B9308ECBF615}.RelWithDebInfo|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

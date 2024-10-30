@@ -55,7 +55,7 @@ namespace refresh
 			}
 		}
 
-		void check_and_set_compression_leel(int _compression_level)
+		void check_and_set_compression_level(int _compression_level)
 		{
 			compression_level = _compression_level;
 
@@ -70,7 +70,7 @@ namespace refresh
 		gz_in_memory(int _compression_level = 9, bool low_memory = false) :
 			low_memory(low_memory)
 		{
-			check_and_set_compression_leel(compression_level);
+			check_and_set_compression_level(_compression_level);
 		}
 
 		gz_in_memory(gz_in_memory&& rhs) noexcept
@@ -115,7 +115,7 @@ namespace refresh
 
 		void set_compression_level(size_t _compression_level)
 		{
-			check_and_set_compression_leel(compression_level);
+			check_and_set_compression_level(_compression_level);
 
 			free_comp();
 		}
@@ -155,7 +155,7 @@ namespace refresh
 			if (level != compression_level)
 			{
 				free_comp();
-				check_and_set_compression_leel(level);
+				check_and_set_compression_level(level);
 			}
 
 			ensure_comp();
