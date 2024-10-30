@@ -74,7 +74,7 @@ endif
 all: mfasta-tool
 
 ng_zlib:
-	cd $(ZLIB_DIR) && ./configure --zlib-compat && $(MAKE) libz.a
+	cd $(ZLIB_DIR) && ./configure --zlib-compat && $(MAKE)
 	cp $(ZLIB_DIR)/libz.* $(MFS_LIBS_DIR)
 
 isa-l:
