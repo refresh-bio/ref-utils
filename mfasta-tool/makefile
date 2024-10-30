@@ -2,8 +2,9 @@ ISAL_DIR = ../3rd_party/isa-l
 MD5_DIR = ../3rd_party/md5
 ZLIB_DIR = ../3rd_party/zlib-ng
 LIBDEFLATE_DIR = ../3rd_party/libdeflate
+MIMALLOC_INLUCDE_DIR = ../3rd_party/mimalloc/include
 
-INC_DIRS =. ../3rd_party/zlib-ng/ ../3rd_party/isa-l/include ../3rd_party/libdeflate ../libs ..
+INC_DIRS =. ../3rd_party/zlib-ng/ ../3rd_party/isa-l/include ../3rd_party/libdeflate ../libs .. ../3rd_party/mimalloc/include 
 INCLUDE_DIR=$(foreach d, $(INC_DIRS), -I$d)
 
 MFS_LIBS_DIR = ../3rd_party
@@ -85,6 +86,11 @@ libdeflate:
 	cd $(LIBDEFLATE_DIR) && cmake -B build && cmake --build build
 	cp $(LIBDEFLATE_DIR)/build/libdeflate.* $(MFS_LIBS_DIR)
 
+MIMALLOC_OBJ=../3rd_party/mimalloc/mimalloc.o
+
+$(MIMALLOC_OBJ):
+	$(CXX) -DMI_MALLOC_OVERRIDE -O3 -DNDEBUG -fPIC -Wall -Wextra -Wno-unknown-pragmas -fvisibility=hidden -Wstrict-prototypes -ftls-model=initial-exec -fno-builtin-malloc -std=gnu11 -c -I ../3rd_party/mimalloc/include ../3rd_party/mimalloc/src/static.c -o $(MIMALLOC_OBJ)
+
 %.o: %.cpp $(gz_target)
 	$(CXX) $(CFLAGS) -c $< -o $@
 
@@ -94,8 +100,10 @@ libdeflate:
 mfasta-tool: $(gz_target) \
 	libdeflate \
 	mfasta-tool.o \
+	$(MIMALLOC_OBJ) \
 	$(MD5_DIR)/md5.o
 	$(CXX) -o $@	\
+	$(MIMALLOC_OBJ) \
 	mfasta-tool.o \
 	$(MFS_LIBS_DIR)/libdeflate.a \
 	$(MFS_LIBS_DIR)/$(GZ_LIB) \
@@ -106,6 +114,7 @@ clean:
 	-rm *.o
 	-rm mfasta-tool
 	-rm $(MD5_DIR)/*.o
+	-rm $(MIMALLOC_OBJ)
 	cd $(ZLIB_DIR) && $(MAKE) -f Makefile.in clean
 	cd $(ISAL_DIR) && $(MAKE) -f Makefile.unx clean
 	-cd $(LIBDEFLATE_DIR) && rm -r build
