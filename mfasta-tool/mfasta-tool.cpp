@@ -147,6 +147,12 @@ bool parse_args_mrds(int argc, char **argv)
 			++i;
 			params.in_names = split(fn_list, ',');
 		}
+		else if (argv[i] == "--in-prefixes"s && i + 1 < argc)
+		{
+			string pref_list = argv[i + 1];
+			++i;
+			params.in_prefixes = split(pref_list, ',');
+		}
 		else
 		{
 			cerr << "Unknown option: " << argv[i] << endl;
@@ -164,6 +170,14 @@ bool parse_args_mrds(int argc, char **argv)
 	{
 		cerr << "If you want to split the input you mut provide --part-size" << endl;
 		return 0;
+	}
+
+	if (params.in_prefixes.empty())
+		params.in_prefixes.resize(params.in_names.size());
+	else if (params.in_prefixes.size() != params.in_names.size())
+	{
+		cerr << "No. of input prefixes (if provided) must be the same as no. of input names" << endl;
+		return false;
 	}
 
 	return true;
@@ -219,7 +233,7 @@ void process_mrds()
 	size_t no_unique, no_duplicated, no_removed, no_stored;
 
 	thread t_data_source([&q_input_parts] {
-		CDataSource data_source(params.in_names, q_input_parts, params.remove_empty_lines, params.data_source_input_parts_size, params.soft_limit_size_in_part);
+		CDataSource data_source(params.in_names, params.in_prefixes, q_input_parts, params.remove_empty_lines, params.data_source_input_parts_size, params.soft_limit_size_in_part);
 		data_source.run();
 		});
 

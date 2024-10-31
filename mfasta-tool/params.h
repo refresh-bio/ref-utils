@@ -12,6 +12,7 @@ struct CParams
 
 	working_mode_t working_mode = working_mode_t::none;
 	vector<string> in_names;
+	vector<string> in_prefixes;
 	string out_name;
 	string out_prefix = "part";
 	string out_suffix = "fna";

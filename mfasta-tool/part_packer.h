@@ -36,8 +36,12 @@ class CPartPacker
 
 		for (const auto& item : input_part)
 		{
-			buffer.insert(buffer.end(), item.id.begin(), item.id.end());
+//			buffer.insert(buffer.end(), item.id.begin(), item.id.end());
+			buffer.insert(buffer.end(), item.id.front());
+			buffer.insert(buffer.end(), item.prefix.begin(), item.prefix.end());
+			buffer.insert(buffer.end(), item.id.begin() + 1, item.id.end());
 			buffer.emplace_back('\n');
+
 			for (const auto& line : item.lines)
 			{
 				buffer.insert(buffer.end(), line.begin(), line.end());

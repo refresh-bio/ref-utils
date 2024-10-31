@@ -11,6 +11,7 @@ using namespace refresh;
 class CDataSource
 {
 	vector<string> input_names;
+	vector<string> input_prefixes;
 	parallel_queue<input_part_t> &q_input_parts;
 	size_t no_seq_in_part;
 	size_t soft_limit_size_in_part;
@@ -18,7 +19,7 @@ class CDataSource
 
 	input_part_t input_buffer;
 
-	bool load_file(const string& fn)
+	bool load_file(const string& fn, const string &prefix)
 	{
 		stream_in_file msgz(fn);
 
@@ -58,7 +59,7 @@ class CDataSource
 						seq_len_in_part = 0;
 					}
 
-					input_buffer.emplace_back(line, vector<string>());
+					input_buffer.emplace_back(line, prefix, vector<string>());
 					continue;
 				}
 
@@ -76,8 +77,9 @@ class CDataSource
 	}
 
 public:
-	CDataSource(const vector<string>& input_names, parallel_queue<input_part_t> &q_input_parts, bool remove_empty_lines, const size_t no_seq_in_part, const size_t soft_limit_size_in_part) :
+	CDataSource(const vector<string>& input_names, const vector<string>& input_prefixes, parallel_queue<input_part_t> &q_input_parts, bool remove_empty_lines, const size_t no_seq_in_part, const size_t soft_limit_size_in_part) :
 		input_names(input_names),
+		input_prefixes(input_prefixes),
 		q_input_parts(q_input_parts),
 		remove_empty_lines(remove_empty_lines),
 		no_seq_in_part(no_seq_in_part),
@@ -87,8 +89,8 @@ public:
 
 	bool run()
 	{
-		for (const auto& fn : input_names)
-			if (!load_file(fn))
+		for (size_t i = 0; i < input_names.size(); ++i)
+			if (!load_file(input_names[i], input_prefixes[i]))
 			{
 				q_input_parts.mark_completed();
 				return false;

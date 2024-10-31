@@ -9,10 +9,11 @@ using namespace std;
 struct input_item_t
 {
 	string id;
+	string prefix;
 	vector<string> lines;
 
-	input_item_t(const string& id, const vector<string>& lines) :
-		id(id), lines(lines)
+	input_item_t(const string& id, const string &prefix, const vector<string>& lines) :
+		id(id), prefix(prefix), lines(lines)
 	{}
 };
 
