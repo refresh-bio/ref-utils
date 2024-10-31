@@ -27,6 +27,7 @@ class CPartPacker
 		for (const auto& item : input_part)
 		{
 			raw_size += item.id.size() + 1;
+			raw_size += item.prefix.size();
 			for (const auto& line : item.lines)
 				raw_size += line.size() + 1;
 		}
