@@ -22,6 +22,8 @@ class CDataSource
 	{
 		stream_in_file msgz(fn);
 
+		cerr << "Processing " << fn << endl;
+
 		if (!msgz.is_open())
 		{
 			cerr << "Error: cannot open " << fn << endl;
@@ -31,6 +33,7 @@ class CDataSource
 		stream_decompression sdf(&msgz);
 		string line;
 		size_t seq_len_in_part = 0;
+		size_t no_seqs = 0;
 
 		while (!sdf.eof())
 		{
@@ -47,6 +50,7 @@ class CDataSource
 
 				if (line.front() == '>')
 				{
+					++no_seqs;
 					if (input_buffer.size() == no_seq_in_part || seq_len_in_part >= soft_limit_size_in_part)
 					{
 						q_input_parts.push(move(input_buffer));
@@ -65,6 +69,8 @@ class CDataSource
 
 		if (!input_buffer.empty())
 			q_input_parts.push(move(input_buffer));
+
+		cerr << "Processed " << fn << " - " << no_seqs << " sequences " << endl;
 
 		return true;
 	}
