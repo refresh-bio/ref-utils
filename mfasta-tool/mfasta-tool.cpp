@@ -205,6 +205,7 @@ void usage_mrds()
 	cerr << "   -n | --part-size <int>        - no. of sequences in a single output file; 0 - no splitting (default: " << params.n << ")\n";
 	cerr << "   -o | --out-name <string>      - output name when no splitting is made (default: stdout)\n";
 	cerr << "   -i | --in-names <string>      - comma-separated list of input file names\n";
+	cerr << "   --in-prefixes <string>        - comma-separated list of prefixes for input file names (optional)\n";
 	cerr << "   -t | --no-threads <int>       - no. of threads (default: " << params.no_threads << ")\n";
 	cerr << "   --out-prefix <string>         - prefix of output file names (default: " << params.out_prefix << ")\n";
 	cerr << "   --out-suffix <string>         - suffix of output file names (default: " << params.out_suffix << ")\n";
