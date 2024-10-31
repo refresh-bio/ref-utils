@@ -50,12 +50,21 @@ class CMD5Filter
 
 	size_t no_unique, no_duplicated, no_removed;
 
+	string strip_id(const string& s)
+	{
+		vector<char> term_symbols = { ' ', '\t', '\n' };
+		auto p = find_first_of(s.begin(), s.end(), term_symbols.begin(), term_symbols.end());
+
+		return string(s.begin(), p);
+	}
+
 	md5_t get_md5(const vector<string>& input_data)
 	{
 		CMD5 md5;
 
 		for (const auto& s : input_data)
-			md5.Update((uint8_t*) s.data(), s.size());
+			if(s != "\n"s)
+				md5.Update((uint8_t*) s.data(), s.size());
 
 		return md5.Get();
 	}
@@ -66,7 +75,8 @@ class CMD5Filter
 		string tmp;
 
 		for (const auto& s : input_data)
-			md5_fwd.Update((uint8_t*)s.data(), s.size());
+			if (s != "\n"s)
+				md5_fwd.Update((uint8_t*)s.data(), s.size());
 
 		for (auto p = input_data.rbegin(); p != input_data.rend(); ++p)
 		{
@@ -77,7 +87,8 @@ class CMD5Filter
 			for (size_t i = 0; i < len; ++i)
 				tmp[len - 1 - i] = bases_mapping[d[i]];
 
-			md5_rc.Update((uint8_t*) tmp.data(), len);
+			if (tmp != "\n"s)
+				md5_rc.Update((uint8_t*) tmp.data(), len);
 		}
 
 		return make_pair(md5_fwd.Get(), md5_rc.Get());
@@ -94,7 +105,7 @@ class CMD5Filter
 
 			if (p != dict.end())
 			{
-				p->second.emplace_back(true, input_item.id);
+				p->second.emplace_back(true, strip_id(input_item.id));
 				return false;
 			}
 
@@ -102,11 +113,11 @@ class CMD5Filter
 
 			if (p != dict.end())
 			{
-				p->second.emplace_back(false, input_item.id);
+				p->second.emplace_back(false, strip_id(input_item.id));
 				return false;
 			}
 
-			dict[item_md5s.first].emplace_back(true, input_item.id);
+			dict[item_md5s.first].emplace_back(true, strip_id(input_item.id));
 
 			return true;
 		}
@@ -118,11 +129,11 @@ class CMD5Filter
 
 			if (p != dict.end())
 			{
-				p->second.emplace_back(true, input_item.id);
+				p->second.emplace_back(true, strip_id(input_item.id));
 				return false;
 			}
 
-			dict[item_md5].emplace_back(true, input_item.id);
+			dict[item_md5].emplace_back(true, strip_id(input_item.id));
 
 			return true;
 		}	
@@ -140,7 +151,7 @@ class CMD5Filter
 				continue;
 			}
 
-			ofs << dict_item.second.front().second << " ";
+//			ofs << dict_item.second.front().second << " ";
 
 			++no_duplicated;
 			no_removed += dict_item.second.size() - 1;

@@ -55,6 +55,8 @@ class CPartPacker
 		else
 			packed_part.memory_block.swap(buffer);
 
+		packed_part.no_items = input_part.size();
+
 		input_part.clear();
 
 		if (buffer.capacity() > 8 << 20)
