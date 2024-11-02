@@ -1,3 +1,5 @@
+// Consider https://www.nayuki.io/res/fast-md5-hash-implementation-in-x86-assembly/md5.c
+
 /*******************************************************************************
  
  CoLoRd 

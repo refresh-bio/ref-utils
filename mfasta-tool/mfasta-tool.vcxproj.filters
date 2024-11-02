@@ -59,5 +59,8 @@
     <ClInclude Include="..\libs\refresh\compression\lib\gz_wrapper.h">
       <Filter>Library Files</Filter>
     </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

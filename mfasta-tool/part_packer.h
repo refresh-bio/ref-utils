@@ -2,6 +2,7 @@
 
 #include "defs.h"
 #include "data_source.h"
+#include "utils.h"
 
 #include <refresh/compression/lib/gz_wrapper.h>
 #include <refresh/parallel_queues/lib/parallel-queues.h>
@@ -37,10 +38,9 @@ class CPartPacker
 
 		for (const auto& item : input_part)
 		{
-//			buffer.insert(buffer.end(), item.id.begin(), item.id.end());
-			buffer.push_back(item.id.front());
-			buffer.insert(buffer.end(), item.prefix.begin(), item.prefix.end());
-			buffer.insert(buffer.end(), item.id.begin() + 1, item.id.end());
+			string new_id = build_new_id(item.id, item.prefix);
+
+			buffer.insert(buffer.end(), new_id.begin(), new_id.end());
 			buffer.emplace_back('\n');
 
 			for (const auto& line : item.lines)

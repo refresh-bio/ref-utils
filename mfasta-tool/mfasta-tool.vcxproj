@@ -162,6 +162,7 @@
     <ClInclude Include="md5_wrapper.h" />
     <ClInclude Include="params.h" />
     <ClInclude Include="part_packer.h" />
+    <ClInclude Include="utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

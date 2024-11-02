@@ -11,6 +11,7 @@
 
 #include "params.h"
 #include "md5_wrapper.h"
+#include "utils.h"
 
 #include <refresh/parallel_queues/lib/parallel-queues.h>
 
@@ -26,17 +27,32 @@ namespace std
 	{
 		auto operator()(const md5_t& x) const -> size_t
 		{
-			size_t r = 0;
-			for (auto c : x)
-				r = r * 127 + (size_t)c;
-			return r;
+			uint64_t first = 0;
+			uint64_t second = 0;
+
+			for (int i = 0; i < 8; ++i)
+				first += ((uint64_t)x[i]) << (8 * i);
+			for (int i = 0; i < 8; ++i)
+				second += ((uint64_t)x[i+8]) << (8 * i);
+
+			auto mh64 = [](uint64_t h) ->uint64_t
+				{
+					h ^= h >> 33;
+					h *= 0xff51afd7ed558ccdL;
+					h ^= h >> 33;
+					h *= 0xc4ceb9fe1a85ec53L;
+					h ^= h >> 33;
+
+					return h;
+				};
+
+			return (size_t) (mh64(first) ^ mh64(second));
 		}
 	};
 }
 
 class CMD5Filter
 {
-
 	bool rev_comp_as_equivalent;
 	bool mark_duplicates_orientation;
 	parallel_queue<input_part_t>& q_input_parts;
@@ -56,6 +72,11 @@ class CMD5Filter
 		auto p = find_first_of(s.begin(), s.end(), term_symbols.begin(), term_symbols.end());
 
 		return string(s.begin(), p);
+	}
+
+	string prepare_id(const string& id, const string& prefix)
+	{
+		return build_new_id(strip_id(id), prefix);
 	}
 
 	md5_t get_md5(const vector<string>& input_data)
@@ -105,7 +126,7 @@ class CMD5Filter
 
 			if (p != dict.end())
 			{
-				p->second.emplace_back(true, strip_id(input_item.id));
+				p->second.emplace_back(true, prepare_id(input_item.id, input_item.prefix));
 				return false;
 			}
 
@@ -113,11 +134,11 @@ class CMD5Filter
 
 			if (p != dict.end())
 			{
-				p->second.emplace_back(false, strip_id(input_item.id));
+				p->second.emplace_back(false, prepare_id(input_item.id, input_item.prefix));
 				return false;
 			}
 
-			dict[item_md5s.first].emplace_back(true, strip_id(input_item.id));
+			dict[item_md5s.first].emplace_back(true, prepare_id(input_item.id, input_item.prefix));
 
 			return true;
 		}
@@ -129,11 +150,11 @@ class CMD5Filter
 
 			if (p != dict.end())
 			{
-				p->second.emplace_back(true, strip_id(input_item.id));
+				p->second.emplace_back(true, prepare_id(input_item.id, input_item.prefix));
 				return false;
 			}
 
-			dict[item_md5].emplace_back(true, strip_id(input_item.id));
+			dict[item_md5].emplace_back(true, prepare_id(input_item.id, input_item.prefix));
 
 			return true;
 		}	
