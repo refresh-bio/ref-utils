@@ -189,7 +189,7 @@ class CMD5Filter
 				{
 					ofs << " ";
 					if (mark_duplicates_orientation)
-						ofs << di.first ? "+" : "-";
+						ofs << (di.first ? "+" : "-");
 					ofs << di.second;
 				}
 			}
