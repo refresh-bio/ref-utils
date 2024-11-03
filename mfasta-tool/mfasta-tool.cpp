@@ -72,7 +72,7 @@ bool parse_mode(int argc, char** argv)
 // *****************************************************************************************
 bool parse_args_mrds(int argc, char **argv)
 {
-	for (int i = 2; i < argc - 1; ++i)
+	for (int i = 2; i < argc; ++i)
 	{
 		if ((argv[i] == "-n"s || argv[i] == "--part-size"s) && i + 1 < argc)
 		{

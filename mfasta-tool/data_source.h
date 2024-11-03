@@ -19,6 +19,12 @@ class CDataSource
 
 	input_part_t input_buffer;
 
+	void upper_case(string& s)
+	{
+		for (auto& c : s)
+			c &= ~((char)32);
+	}
+
 	bool load_file(const string& fn, const string &prefix)
 	{
 		stream_in_file msgz(fn);
@@ -40,6 +46,8 @@ class CDataSource
 		{
 			if (sdf.getline(line) == 0)
 			{
+				if (line.size() < 60)
+					int aa = 1;
 				if (line.empty())
 				{
 					if (!remove_empty_lines)
@@ -63,6 +71,7 @@ class CDataSource
 					continue;
 				}
 
+				upper_case(line);
 				input_buffer.back().lines.emplace_back(line);
 				seq_len_in_part += line.size();
 			}
