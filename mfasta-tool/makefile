@@ -1,124 +1,72 @@
-ISAL_DIR = ../3rd_party/isa-l
-MD5_DIR = ../3rd_party/md5
-ZLIB_DIR = ../3rd_party/zlib-ng
-LIBDEFLATE_DIR = ../3rd_party/libdeflate
-MIMALLOC_INLUCDE_DIR = ../3rd_party/mimalloc/include
+all: testing
 
-INC_DIRS =. ../3rd_party/zlib-ng/ ../3rd_party/isa-l/include ../3rd_party/libdeflate ../libs .. ../3rd_party/mimalloc/include 
-INCLUDE_DIR=$(foreach d, $(INC_DIRS), -I$d)
+# *** REFRESH makefile utils
+include utils.mk
 
-MFS_LIBS_DIR = ../3rd_party
+# *** Project directories
+3RD_PARTY_DIR := ../3rd_party
+SRC_DIR := ./src
+INCLUDE_DIRS = -I ../libs -I $(3RD_PARTY_DIR)
 
-ifdef MSVC     # Avoid the MingW/Cygwin sections
-    uname_S := Windows
-    uname_M := "x86_64"
-else                          # If uname not available => 'not'
-    uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
-    uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
-endif
+# *** Project configuration
+$(call CHECK_OS_ARCH)
+$(call CHECK_NASM)
+$(call ADD_ZLIB_NG, $(3RD_PARTY_DIR)/zlib-ng)
+$(call ADD_ISAL, $(3RD_PARTY_DIR)/isa-l)
+$(call ADD_LIBDEFLATE, $(3RD_PARTY_DIR)/libdeflate)
+#$(call ADD_LIBZSTD, $(3RD_PARTY_DIR)/libzstd)
+$(call ADD_MIMALLOC, $(3RD_PARTY_DIR)/mimalloc)
+$(call CHOOSE_GZIP_DECOMPRESSION)
+$(call SET_STATIC, $(STATIC_LINK))
+$(call SET_C_CPP_STANDARDS, c11, c++20)
+$(call SET_FLAGS, $(TYPE))
 
-NASM_V := $(shell nasm --version 2>/dev/null)
 
-ifeq ($(PLATFORM), arm8)
-$(info *** ARMv8 with NEON extensions ***)
-    ARCH_FLAGS := -march=armv8-a  -DARCH_ARM
-else ifeq ($(PLATFORM), m1)
-$(info *** Apple M1(or never) with NEON extensions ***)
-    ARCH_FLAGS := -march=armv8.4-a  -DARCH_ARM
-else ifeq ($(PLATFORM), sse2)
-$(info *** x86-64 with SSE2 extensions ***)
-    ARCH_FLAGS := -msse2 -m64 -DARCH_X64 
-else ifeq ($(PLATFORM), avx)
-$(info *** x86-64 with AVX extensions ***)
-    ARCH_FLAGS := -mavx -m64  -DARCH_X64
-else ifeq ($(PLATFORM), avx2)
-$(info *** x86-64 with AVX2 extensions ***)
-    ARCH_FLAGS := -mavx2 -m64  -DARCH_X64
-else
-$(info *** Unspecified platform - use native compilation)
-    ifeq ($(uname_M),x86_64)
-        ARCH_FLAGS := -march=native -DARCH_X64
-    else
-        ARCH_FLAGS := -march=native -DARCH_ARM
-    endif	
-endif
+#$(call ADD_RADULS_INPLACE, $(3RD_PARTY)/raduls-inplace)
+#$(call ADD_IGRAPH, $(3RD_PARTY)/igraph)
+#$(call ADD_SBWT, $(3RD_PARTY)/sbwt)
 
-CFLAGS	= -fPIC -static -pthread -Wall -O3 -std=c++20 $(ARCH_FLAGS) $(INCLUDE_DIR) -fpermissive
-CLINK	= -lm
+MD5_DIR := $(3RD_PARTY_DIR)/md5
 
-ifeq ($(uname_S),Linux)
-    CLINK+=-fabi-version=6
-    CLINK+=-static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
-endif
+# *** Source files
+C_OBJS := $(MD5_DIR)/md5.c.o
+CPP_OBJS := $(SRC_DIR)/mfasta-tool.cpp.o
 
-ifeq ($(uname_S),Darwin)
-    CLINK += -lpthread -static-libgcc
-endif
+# *** Source files dependencies
+$(MD5_DIR)/md5.c.o: $(MD5_DIR)/md5.c
+$(SRC_DIR)/mfasta-tool.cpp.o: $(SRC_DIR)/mfasta-tool.cpp $(SRC_DIR)/params.h $(SRC_DIR)/data_source.h $(SRC_DIR)/data_storer.h $(SRC_DIR)/data_partitioner.h $(SRC_DIR)/md5_filter.h $(SRC_DIR)/part_packer.h
 
-ifeq ($(uname_M),x86_64)
-    ifdef NASM_V
-        GZ_LIB = isa-l.a
-        gz_target = isa-l
-        CFLAGS+=-DREFRESH_USE_IGZIP
-    else
-        GZ_LIB = libz.a
-        gz_target = ng_zlib
-        CFLAGS+=-DREFRESH_USE_ZLIB
-    endif
-else
-    GZ_LIB = libz.a
-    gz_target = ng_zlib
-    CFLAGS+=-DREFRESH_USE_ZLIB
-endif
+# *** Source files build rules
+$(MD5_DIR)/%.c.o: $(MD5_DIR)/%.c
+	$(CC) $(C_FLAGS) $(OPTIMIZATION_FLAGS) $(ARCH_FLAGS) $(INCLUDE_DIRS) -c $< -o $@
 
-all: mfasta-tool
+$(SRC_DIR)/%.c.o: $(SRC_DIR)%.c
+	$(CC) $(C_FLAGS) $(OPTIMIZATION_FLAGS) $(ARCH_FLAGS) $(INCLUDE_DIRS)  -c $< -o $@
 
-ng_zlib:
-	cd $(ZLIB_DIR) && ./configure --zlib-compat && $(MAKE)
-	cp $(ZLIB_DIR)/libz.* $(MFS_LIBS_DIR)
+$(SRC_DIR)/%.cpp.o: $(SRC_DIR)/%.cpp
+	$(CXX) $(CPP_FLAGS) $(OPTIMIZATION_FLAGS) $(ARCH_FLAGS) $(INCLUDE_DIRS)  -c $< -o $@
 
-isa-l:
-	cd $(ISAL_DIR) && $(MAKE) -f Makefile.unx
-	cp $(ISAL_DIR)/bin/isa-l.a $(MFS_LIBS_DIR)
-	cp $(ISAL_DIR)/bin/libisal.* $(MFS_LIBS_DIR)
 
-libdeflate:
-	cd $(LIBDEFLATE_DIR) && cmake -B build && cmake --build build
-	cp $(LIBDEFLATE_DIR)/build/libdeflate.* $(MFS_LIBS_DIR)
-
-MIMALLOC_OBJ=../3rd_party/mimalloc/mimalloc.o
-
-$(MIMALLOC_OBJ):
-	$(CXX) -DMI_MALLOC_OVERRIDE -O3 -DNDEBUG -fPIC -Wall -Wextra -Wno-unknown-pragmas -fvisibility=hidden -Wstrict-prototypes -ftls-model=initial-exec -fno-builtin-malloc -std=gnu11 -c -I ../3rd_party/mimalloc/include ../3rd_party/mimalloc/src/static.c -o $(MIMALLOC_OBJ)
-
-%.o: %.cpp $(gz_target)
-	$(CXX) $(CFLAGS) -c $< -o $@
-
-%.o: %.c
-	$(CXX) $(CFLAGS) -c $< -o $@
-
-mfasta-tool: $(gz_target) \
-	libdeflate \
-	mfasta-tool.o \
+# *** Targets
+mfasta-tool: $(GZ_TARGET) mimalloc_obj libdeflate \
+	$(C_OBJS) \
+	$(CPP_OBJS) 
+	$(CXX) -o $@ \
 	$(MIMALLOC_OBJ) \
-	$(MD5_DIR)/md5.o
-	$(CXX) -o $@	\
-	$(MIMALLOC_OBJ) \
-	mfasta-tool.o \
-	$(MFS_LIBS_DIR)/libdeflate.a \
-	$(MFS_LIBS_DIR)/$(GZ_LIB) \
-	$(MD5_DIR)/md5.o \
-	$(CLINK)
+	$(C_OBJS) \
+	$(CPP_OBJS) \
+	$(LIBRARY_FILES) \
+	$(LINKER_FLAGS) \
+	$(LINKER_DIRS)
 
-clean:
-	-rm *.o
+
+# *** Cleaning
+.PHONY: clean init
+clean: clean-zlib-ng clean-isa-l clean-libdeflate clean-mimalloc_obj
+	-rm $(C_OBJS)
+	-rm $(CPP_OBJS)
 	-rm mfasta-tool
-	-rm $(MD5_DIR)/*.o
-	-rm $(MIMALLOC_OBJ)
-	cd $(ZLIB_DIR) && $(MAKE) -f Makefile.in clean
-	cd $(ISAL_DIR) && $(MAKE) -f Makefile.unx clean
-	-cd $(LIBDEFLATE_DIR) && rm -r build
-	-rm $(MFS_LIBS_DIR)/libz.*
-	-rm $(MFS_LIBS_DIR)/isa-l.*
-	-rm $(MFS_LIBS_DIR)/libisal.*
-	-rm $(MFS_LIBS_DIR)/libdeflate.*
+
+init:
+	$(call INIT_SUBMODULES)
+
