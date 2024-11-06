@@ -6,11 +6,12 @@ include utils.mk
 # *** Project directories
 3RD_PARTY_DIR := ../3rd_party
 SRC_DIR := ./src
-INCLUDE_DIRS = -I ../libs -I $(3RD_PARTY_DIR)
+INCLUDE_DIRS := -I . 
 
 # *** Project configuration
 $(call CHECK_OS_ARCH)
 $(call CHECK_NASM)
+$(call ADD_REFRESH_LIB, $(3RD_PARTY_DIR))
 $(call ADD_ZLIB_NG, $(3RD_PARTY_DIR)/zlib-ng)
 $(call ADD_ISAL, $(3RD_PARTY_DIR)/isa-l)
 $(call ADD_LIBDEFLATE, $(3RD_PARTY_DIR)/libdeflate)
