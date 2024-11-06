@@ -19,7 +19,7 @@
 
 ******************************************************************************/
 #pragma once
-#include "3rd_party/md5/md5.h"
+#include "../3rd_party/md5/md5.h"
 #include <cinttypes>
 #include <vector>
 
