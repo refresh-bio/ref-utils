@@ -201,6 +201,9 @@ endef
 # Check compiler version
 define CHECK_COMPILER_VERSION
 	$(eval COMPILER_LINE := $(strip $(shell $(CXX) --version 2>&1 | grep "g++\|clang" | sed -E 's/\(.*\)//')))
+	$(eval COMPILER_LINE := $(subst Apple,,$(COMPILER_DESC)))
+	$(eval COMPILER_LINE := $(subst version,,$(COMPILER_DESC)))
+
     $(if $(filter 2,$(words $(COMPILER_LINE))),, \
         $(error Cannot determine compiler: $(COMPILER_LINE)) \
 	)
