@@ -187,11 +187,11 @@ define SET_FLAGS
 			$(eval PLATFORM_SPECIFIC_C_FLAGS := ) \
 			$(eval PLATFORM_SPECIFIC_CPP_FLAGS := -ffp-contract=off) \
 			$(eval PLATFORM_SPECIFIC_LINKER_FLAGS := -fabi-version=6), \
-			$(if $(filter Darwin_arm64,$(OS_ARCH_TYPE)) \
+			$(if $(filter Darwin_arm64,$(OS_ARCH_TYPE)), \
 				$(eval PLATFORM_SPECIFIC_C_FLAGS := ) \
 				$(eval PLATFORM_SPECIFIC_CPP_FLAGS := ) \
 				$(eval PLATFORM_SPECIFIC_LINKER_FLAGS := ), \
-				$(if $(filter Darwin_x86_64,$(OS_ARCH_TYPE)) \
+				$(if $(filter Darwin_x86_64,$(OS_ARCH_TYPE)), \
 					$(eval PLATFORM_SPECIFIC_C_FLAGS := ) \
 					$(eval PLATFORM_SPECIFIC_CPP_FLAGS := ) \
 					$(eval PLATFORM_SPECIFIC_LINKER_FLAGS := ) \
