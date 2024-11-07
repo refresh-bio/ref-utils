@@ -9,6 +9,7 @@ define INIT_GLOBALS
 	$(eval C_FLAGS := )
 	$(eval CPP_FLAGS := )
 	$(eval LINKER_FLAGS := )
+	$(eval CMAKE_OSX_SYSROOT_FLAG := )
 endef
 
 ### Macros for 3rd-party libraries registration
@@ -287,6 +288,11 @@ define CHECK_OS_ARCH
 							$(info *** Unspecified platform - using native compilation for x86_64 ***), \
 							$(eval ARCH_FLAGS := -march=native -DARCH_ARM) \
 							$(info *** Unspecified platform - using native compilation for ARM ***)))))))
+	
+	$(if $(filter Darwin,$(OS_TYPE)), \
+		$(eval SDK_PATH := $(shell $(CXX) -v 2>&1 | grep -- '--with-sysroot' | sed -E 's/.*--with-sysroot=([^ ]+).*/\1/')) \
+		$(eval CMAKE_OSX_SYSROOT_FLAG := -DCMAKE_OSX_SYSROOT=$(SDK_PATH)) \
+	)
 
 endef
 
@@ -299,13 +305,13 @@ endef
 
 ### Library targets
 zlib-ng:
-	cd $(ZLIB_DIR); cmake -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build-g++/zlib-ng -S . -DZLIB_COMPAT=ON; cmake --build build-g++/zlib-ng --config Release
+	cd $(ZLIB_DIR); cmake $(CMAKE_OSX_SYSROOT_FLAG) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build-g++/zlib-ng -S . -DZLIB_COMPAT=ON; cmake --build build-g++/zlib-ng --config Release
 
 isa-l:
 	cd $(ISAL_DIR) && $(MAKE) -f Makefile.unx
 
 libdeflate:
-	cd $(LIBDEFLATE_DIR) && cmake -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build && cmake --build build
+	cd $(LIBDEFLATE_DIR) && cmake $(CMAKE_OSX_SYSROOT_FLAG) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build && cmake --build build
 
 libzstd:
 	cd $(LIBZSTD_DIR) && $(MAKE)
@@ -314,13 +320,13 @@ radule-inplace:
 	cd $(RADULS_DIR) && $(MAKE)
 
 igraph:
-	cd $(IGRAPH_DIR); cmake -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -S libs/igraph -B libs/igraph/build; cmake --build libs/igraph/build
+	cd $(IGRAPH_DIR); cmake $(CMAKE_OSX_SYSROOT_FLAG) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -S libs/igraph -B libs/igraph/build; cmake --build libs/igraph/build
 
 mimalloc_obj:
 	cd $(MIMALLOC_DIR) && $(CXX) -DMI_MALLOC_OVERRIDE -O3 -DNDEBUG -fPIC -Wall -Wextra -Wno-unknown-pragmas -fvisibility=hidden -ftls-model=initial-exec -fno-builtin-malloc -c -I include src/static.c -o mimalloc.o
 
 sbwt:
-	cd $(SBWT_DIR)/SBWT/build; cmake -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) .. -DMAX_KMER_LENGTH=32; $(MAKE) -j
+	cd $(SBWT_DIR)/SBWT/build; cmake $(CMAKE_OSX_SYSROOT_FLAG) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) .. -DMAX_KMER_LENGTH=32; $(MAKE) -j
 
 
 ### Clean library targets
