@@ -4,13 +4,13 @@ all: mfasta-tool
 include utils.mk
 
 $(call INIT_GLOBALS)
+$(call CHECK_OS_ARCH)
 
 # *** Project directories
 3RD_PARTY_DIR := ../3rd_party
 SRC_DIR := ./src
 
 # *** Project configuration
-$(call CHECK_OS_ARCH)
 $(call CHECK_NASM)
 $(call ADD_REFRESH_LIB, $(3RD_PARTY_DIR))
 $(call ADD_ZLIB_NG, $(3RD_PARTY_DIR)/zlib-ng)
