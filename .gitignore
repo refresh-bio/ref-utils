@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /multi-fasta-split/multi-fasta-split
 *.o
+/mfasta-tool/mfasta-tool
