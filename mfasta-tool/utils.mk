@@ -314,7 +314,7 @@ radule-inplace:
 	cd $(RADULS_DIR) && $(MAKE)
 
 igraph:
-	cd $(IGRAPH_DIR); cmake -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -S libs/igraph -B libs/igraph/build; cmake -S libs/igraph -B libs/igraph/build; cmake --build libs/igraph/build
+	cd $(IGRAPH_DIR); cmake -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -S libs/igraph -B libs/igraph/build; cmake --build libs/igraph/build
 
 mimalloc_obj:
 	cd $(MIMALLOC_DIR) && $(CXX) -DMI_MALLOC_OVERRIDE -O3 -DNDEBUG -fPIC -Wall -Wextra -Wno-unknown-pragmas -fvisibility=hidden -ftls-model=initial-exec -fno-builtin-malloc -c -I include src/static.c -o mimalloc.o
