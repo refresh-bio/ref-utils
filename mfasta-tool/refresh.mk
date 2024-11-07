@@ -10,6 +10,7 @@ define INIT_GLOBALS
 	$(eval CPP_FLAGS:=)
 	$(eval LINKER_FLAGS:=)
 	$(eval CMAKE_OSX_FIX:=)
+	$(eval COMPILER_ALLOWED:=)
 endef
 
 ### Macros for 3rd-party libraries registration
@@ -182,6 +183,7 @@ endef
 define SET_COMPILER_VERSION_ALLOWED
 	$(eval COMPILER_VERSION_$(strip $(1))_$(strip $(2))_MIN:=$(strip $(3)))
 	$(eval COMPILER_VERSION_$(strip $(1))_$(strip $(2))_MAX:=$(strip $(4)))
+	$(eval COMPILER_ALLOWED+=COMPILER_VERSION_$(strip $(1))_$(strip $(2)))
 endef
 
 # *** Utility functions
@@ -434,6 +436,17 @@ _testing:
 	$(call show_var,OS_ARCH_TYPE)
 	$(call show_var,ARCH_FLAGS)
 	$(call show_var,NASM_VERSION)
+
+	$(info *** Compilers ***)
+	$(call show_var,COMPILER_DESC)
+	$(call show_var,COMPILER_VERSION_FULL)
+	$(call show_var,COMPILER_VERSION_MAJOR)
+	$(call show_var,COMPILER_ALLOWED)
+	$(foreach desc,\
+		$(wordlist 1,$(words $(COMPILER_ALLOWED)),$(COMPILER_ALLOWED)), \
+		$(call show_var,$(desc)_MIN) \
+		$(call show_var,$(desc)_MAX) \
+		)
 
 	$(info *** Main directories ***)
 	$(call show_var,INCLUDE_DIRS)
