@@ -353,23 +353,88 @@ clean-sbwt:
 
 
 ### Testing
+define show_var
+	$(info $(1): $($(1)))
+endef
+
+define show_var_opt
+	$(if $(1), \
+		$(info $(1): $($(1))) \
+	)
+endef
+
 _testing:
-	@echo "OS_TYPE: $(OS_TYPE)"
-	@echo "ARCH_TYPE: $(ARCH_TYPE)"
-	@echo "OS_ARCH_TYPE: $(OS_ARCH_TYPE)"
-	@echo "ARCH_FLAGS: $(ARCH_FLAGS)"
-	@echo "INCLUDE_DIRS: $(INCLUDE_DIRS)"
-	@echo "Check NASM: $(NASM_VERSION)"
-	@echo "ISAL_DIR: $(ISAL_DIR)"
-	@echo "GZ_LIB: $(GZ_LIB)"
-	@echo "GZ_TARGET: $(GZ_TARGET)"
-	@echo "MIMALLOC_OBJ: $(MIMALLOC_OBJ)"
-	@echo "STATIC_LFLAGS: $(STATIC_LFLAGS)"
-	@echo "C_STD: $(C_STD)"
-	@echo "CPP_STD: $(CPP_STD)"
-	@echo "C_FLAGS: $(C_FLAGS)"
-	@echo "CPP_FLAGS: $(CPP_FLAGS)"
-	@echo "LINKER_FLAGS: $(LINKER_FLAGS)"
-	@echo "OPTIMIZATION_FLAGS: $(OPTIMIZATION_FLAGS)"
-	@echo "CPP_FLAGS_SSE4: $(CPP_FLAGS_SSE4)"
+	$(info *** General ***)
+	$(call show_var,OS_TYPE)
+	$(call show_var,ARCH_TYPE)
+	$(call show_var,OS_ARCH_TYPE)
+	$(call show_var,ARCH_FLAGS)
+	$(call show_var,NASM_VERSION)
+
+	$(info *** Main directories ***)
+	$(call show_var,INCLUDE_DIRS)
+	$(call show_var,LIBRARY_DIRS)
+
+	$(info *** Compiler and linker flags ***)
+	$(call show_var,C_STD)
+	$(call show_var,CPP_STD)
+	$(call show_var,C_FLAGS)
+	$(call show_var,CPP_FLAGS)
+	$(call show_var,OPTIMIZATION_FLAGS)
+	$(call show_var,LINKER_FLAGS)
+	$(call show_var,STATIC_LFLAGS)
+	$(call show_var,CPP_FLAGS_SSE2)
+	$(call show_var,CPP_FLAGS_SSE4)
+	$(call show_var,CPP_FLAGS_AVX)
+	$(call show_var,CPP_FLAGS_AVX2)
+	$(call show_var,CPP_FLAGS_AVX512)
+	$(call show_var,CPP_FLAGS_NEON)
+
+	$(info *** Libraries ***)
+	$(info * gzip decompression *)
+	$(call show_var,GZ_TARGET)
+
+	$(info * zlib-ng *)
+	$(call show_var_opt,ZLIB_DIR)
+	$(call show_var_opt,ZLIB_A_DIR)
+	$(call show_var_opt,ZLIB_A)
+
+	$(info * isa-l *)
+	$(call show_var_opt,ISAL_DIR)
+	$(call show_var_opt,ISAL_A_DIR)
+	$(call show_var_opt,ISAL_A)
+
+	$(info * libdeflate *)
+	$(call show_var_opt,LIBDEFLATE_DIR)
+	$(call show_var_opt,LIBDEFLATE_A_DIR)
+	$(call show_var_opt,LIBDEFLATE_A)
+	
+	$(info * libzstd *)
+	$(call show_var_opt,LIBZSTD_DIR)
+	$(call show_var_opt,LIBZSTD_A_DIR)
+	$(call show_var_opt,LIBZSTD_A)
+
+	$(info * mimalloc *)
+	$(call show_var_opt,MIMALLOC_INCLUDE_DIR)
+	$(call show_var_opt,MIMALLOC_DIR)
+	$(call show_var_opt,MIMALLOC_OBJ)
+
+	$(info * raduls *)
+	$(call show_var_opt,RADULS_INPLACE_DIR)
+	$(call show_var_opt,RADULS_INPLACE_A_DIR)
+	$(call show_var_opt,RADULS_INPLACE_A)
+
+	$(info * igraph *)
+	$(call show_var_opt,IGRAPH_DIR)
+	$(call show_var_opt,IGRAPH_A_DIR)
+	$(call show_var_opt,IGRAPH_A)
+	
+	$(info * SBWT *)
+	$(call show_var_opt,SBWT_DIR)
+	$(call show_var_opt,SBWT_A_DIR)
+	$(call show_var_opt,SBWT_A)
+	$(call show_var_opt,SBWT_SDSL_A)
+	$(call show_var_opt,SBWT_KMC_CORE_A)
+	$(call show_var_opt,SBWT_KMC_TOOLS_A)
+
 
