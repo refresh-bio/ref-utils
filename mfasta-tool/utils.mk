@@ -9,7 +9,7 @@ define INIT_GLOBALS
 	$(eval C_FLAGS := )
 	$(eval CPP_FLAGS := )
 	$(eval LINKER_FLAGS := )
-	$(eval CMAKE_OSX_SYSROOT_FLAG := )
+	$(eval CMAKE_OSX_FIX := )
 endef
 
 ### Macros for 3rd-party libraries registration
@@ -178,6 +178,60 @@ define SET_C_CPP_STANDARDS
 	$(eval CPP_STD := $(2))
 endef
 
+# Define allowed compiler version and type
+define SET_COMPILER_VERSION_ALLOWED
+	$(eval COMPILER_VERSION_$(strip $(1))_$(strip $(2))_MIN := $(strip $(3)))
+	$(eval COMPILER_VERSION_$(strip $(1))_$(strip $(2))_MAX := $(strip $(4)))
+endef
+
+# *** Utility functions
+define LESS_THAN
+	$(if $(filter 0,$(shell [ $(1) -lt $(2) ]; echo $$?)),1,0)
+endef
+
+define GREATER_THAN
+	$(if $(filter 0,$(shell [ $(1) -gt $(2) ]; echo $$?)),1,0)
+endef
+
+define IN_RANGE
+	$(shell if [ $(COMP) -ge $(MIN) ] && [ $(COMP) -le $(MAX) ]; then echo 1; else echo 0; fi)
+endef
+
+
+# Check compiler version
+define CHECK_COMPILER_VERSION
+	$(eval COMPILER_LINE := $(strip $(shell $(CXX) --version 2>&1 | grep "g++\|clang" | sed -E 's/\(.*\)//')))
+    $(if $(filter 2,$(words $(COMPILER_LINE))),, \
+        $(error Cannot determine compiler: $(COMPILER_LINE)) \
+	)
+
+	$(eval COMPILER_DESC := $(firstword $(COMPILER_LINE)))
+	$(eval COMPILER_VERSION_FULL := $(lastword $(COMPILER_LINE)))
+	$(eval COMPILER_VERSION_MAJOR := $(firstword $(subst ., ,$(COMPILER_VERSION_FULL))))
+
+	$(eval COMPILER_DESC := $(subst g++,GCC,$(COMPILER_DESC)))
+	$(eval COMPILER_DESC := $(subst clang,CLANG,$(COMPILER_DESC)))
+
+	$(info Compiler: $(COMPILER_DESC))
+	$(info Version: $(COMPILER_VERSION_MAJOR))
+
+	$(if $(or $(COMPILER_VERSION_$(COMPILER_DESC)_$(OS_ARCH_TYPE)_MIN),$(COMPILER_VERSION_$(COMPILER_DESC)_$(OS_ARCH_TYPE)_MAX)),\
+		,\
+		$(error Compiler not supported) \
+	)
+
+	$(if $(COMPILER_VERSION_$(COMPILER_DESC)_$(OS_ARCH_TYPE)_MIN), \
+		$(if $(filter 1,$(call LESS_THAN,$(COMPILER_VERSION_MAJOR),$(COMPILER_VERSION_$(COMPILER_DESC)_$(OS_ARCH_TYPE)_MIN))), \
+			$(error Too low compiler version), \
+			$(if $(COMPILER_VERSION_$(COMPILER_DESC)_$(OS_ARCH_TYPE)_MAX), \
+				$(if $(filter 1,$(call GREATER_THAN,$(COMPILER_VERSION_MAJOR),$(COMPILER_VERSION_$(COMPILER_DESC)_$(OS_ARCH_TYPE)_MAX))), \
+					$(error Too high compiler version) \
+				), \
+			) 
+		), \
+	)
+endef
+
 # Add type-specifix flags
 define SET_FLAGS
 	$(if $(filter Linux_x86_64,$(OS_ARCH_TYPE)), \
@@ -291,7 +345,7 @@ define CHECK_OS_ARCH
 	
 	$(if $(filter Darwin,$(OS_TYPE)), \
 		$(eval SDK_PATH := $(shell $(CXX) -v 2>&1 | grep -- '--with-sysroot' | sed -E 's/.*--with-sysroot=([^ ]+).*/\1/')) \
-		$(eval CMAKE_OSX_SYSROOT_FLAG := -DCMAKE_OSX_SYSROOT=$(SDK_PATH)) \
+		$(eval CMAKE_OSX_FIX := -DCMAKE_OSX_SYSROOT=$(SDK_PATH)) \
 	)
 
 endef
@@ -305,13 +359,13 @@ endef
 
 ### Library targets
 zlib-ng:
-	cd $(ZLIB_DIR); cmake $(CMAKE_OSX_SYSROOT_FLAG) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build-g++/zlib-ng -S . -DZLIB_COMPAT=ON; cmake --build build-g++/zlib-ng --config Release
+	cd $(ZLIB_DIR); cmake $(CMAKE_OSX_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build-g++/zlib-ng -S . -DZLIB_COMPAT=ON; cmake --build build-g++/zlib-ng --config Release
 
 isa-l:
 	cd $(ISAL_DIR) && $(MAKE) -f Makefile.unx
 
 libdeflate:
-	cd $(LIBDEFLATE_DIR) && cmake $(CMAKE_OSX_SYSROOT_FLAG) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build && cmake --build build
+	cd $(LIBDEFLATE_DIR) && cmake $(CMAKE_OSX_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build && cmake --build build
 
 libzstd:
 	cd $(LIBZSTD_DIR) && $(MAKE)
@@ -320,13 +374,17 @@ radule-inplace:
 	cd $(RADULS_DIR) && $(MAKE)
 
 igraph:
-	cd $(IGRAPH_DIR); cmake $(CMAKE_OSX_SYSROOT_FLAG) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -S libs/igraph -B libs/igraph/build; cmake --build libs/igraph/build
+	$(if Darwin,$(OS_TYPE),
+		$(eval IEEE754_DOUBLE_ENDIANNESS_MATCHES_FIX := -DIEEE754_DOUBLE_ENDIANNESS_MATCHES=TRUE),
+		$(eval IEEE754_DOUBLE_ENDIANNESS_MATCHES_FIX := ),
+	)
+	cd $(IGRAPH_DIR); cmake $(CMAKE_OSX_FIX) $(IEEE754_DOUBLE_ENDIANNESS_MATCHES_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -S libs/igraph -B libs/igraph/build; cmake --build libs/igraph/build
 
 mimalloc_obj:
 	cd $(MIMALLOC_DIR) && $(CXX) -DMI_MALLOC_OVERRIDE -O3 -DNDEBUG -fPIC -Wall -Wextra -Wno-unknown-pragmas -fvisibility=hidden -ftls-model=initial-exec -fno-builtin-malloc -c -I include src/static.c -o mimalloc.o
 
 sbwt:
-	cd $(SBWT_DIR)/SBWT/build; cmake $(CMAKE_OSX_SYSROOT_FLAG) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) .. -DMAX_KMER_LENGTH=32; $(MAKE) -j
+	cd $(SBWT_DIR)/SBWT/build; cmake $(CMAKE_OSX_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) .. -DMAX_KMER_LENGTH=32; $(MAKE) -j
 
 
 ### Clean library targets
