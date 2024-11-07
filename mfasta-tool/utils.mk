@@ -1,3 +1,14 @@
+### Macros for initialization
+define INIT_GLOBALS
+	$(info *** Initialization of global values ***)
+	$(eval INCLUDE_DIRS := -I .)
+	$(eval LIBRARY_FILES := )
+	$(eval LINKER_DIRS := )
+	$(eval C_FLAGS := )
+	$(eval CPP_FLAGS := )
+	$(eval LINKER_FLAGS := )
+endef
+
 ### Macros for 3rd-party libraries registration
 # Add zlib-ng
 define ADD_ZLIB_NG
@@ -151,8 +162,8 @@ define SET_STATIC
 		$(if $(filter Darwin,$(OS_TYPE)), \
 			$(eval STATIC_LFLAGS := -static-libgcc -static-libstdc++ -pthread), \
 			$(if $(filter x86_64,$(ARCH_TYPE)), \
-				$(eval STATIC_LFLAGS = -static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive), \
-				$(eval STATIC_LFLAGS = -static-libgcc -static-libstdc++ -lpthread) \
+				$(eval STATIC_LFLAGS := -static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive), \
+				$(eval STATIC_LFLAGS := -static-libgcc -static-libstdc++ -lpthread) \
 			)
 		)
 	)
@@ -340,7 +351,7 @@ clean-sbwt:
 
 
 ### Testing
-testing:
+_testing:
 	@echo "OS_TYPE: $(OS_TYPE)"
 	@echo "ARCH_TYPE: $(ARCH_TYPE)"
 	@echo "OS_ARCH_TYPE: $(OS_ARCH_TYPE)"

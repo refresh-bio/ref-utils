@@ -1,12 +1,13 @@
-all: testing
+all: mfasta-tool
 
 # *** REFRESH makefile utils
 include utils.mk
 
+$(call INIT_GLOBALS)
+
 # *** Project directories
 3RD_PARTY_DIR := ../3rd_party
 SRC_DIR := ./src
-INCLUDE_DIRS := -I . 
 
 # *** Project configuration
 $(call CHECK_OS_ARCH)

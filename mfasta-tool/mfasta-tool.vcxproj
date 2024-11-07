@@ -152,8 +152,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\3rd_party\md5\md5.h" />
-    <ClInclude Include="..\libs\refresh\compression\lib\file_wrapper.h" />
-    <ClInclude Include="..\libs\refresh\compression\lib\gz_wrapper.h" />
+    <ClInclude Include="..\3rd_party\refresh\compression\lib\file_wrapper.h" />
+    <ClInclude Include="..\3rd_party\refresh\compression\lib\gz_wrapper.h" />
     <ClInclude Include="src\data_partitioner.h" />
     <ClInclude Include="src\data_source.h" />
     <ClInclude Include="src\data_storer.h" />
