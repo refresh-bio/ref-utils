@@ -299,7 +299,7 @@ endef
 
 ### Library targets
 zlib-ng:
-	cd $(ZLIB_DIR); cmake -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build-g++/zlib-ng -S . -DZLIB_COMPAT=ON; cmake --build build-g++/zlib-ng --config Release
+	cd $(ZLIB_DIR); cmake -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build-g++/zlib-ng -S . -DZLIB_COMPAT=ON; cmake -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) --build build-g++/zlib-ng --config Release
 
 isa-l:
 	cd $(ISAL_DIR) && $(MAKE) -f Makefile.unx
