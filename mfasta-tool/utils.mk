@@ -1,3 +1,5 @@
+### REFRESH group macros - v.1.0.0 (2024-11-07)
+
 ### Macros for initialization
 define INIT_GLOBALS
 	$(info *** Initialization of global values ***)
