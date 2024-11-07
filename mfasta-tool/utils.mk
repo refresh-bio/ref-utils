@@ -16,10 +16,10 @@ endef
 # Add zlib-ng
 define ADD_ZLIB_NG
 	$(info *** Adding zlib-ng ***)
-	$(eval INCLUDE_DIRS += -I$(1))
+	$(eval INCLUDE_DIRS += -I$(1)/build-g++/zlib-ng)
 	$(eval ZLIB_DIR := $(1))
-	$(eval ZLIB_A_DIR := $(1))
-	$(eval ZLIB_A := $(1)/libz.a)
+	$(eval ZLIB_A_DIR := $(1)/build-g++/zlib-ng)
+	$(eval ZLIB_A := $(ZLIB_A_DIR)/libz.a)
 endef
 
 # Add isa-l
