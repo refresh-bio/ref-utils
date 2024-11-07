@@ -1,7 +1,7 @@
 all: mfasta-tool
 
 # *** REFRESH makefile utils
-include utils.mk
+include refresh.mk
 
 $(call INIT_GLOBALS)
 $(call CHECK_OS_ARCH)
