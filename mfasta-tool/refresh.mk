@@ -1,4 +1,4 @@
-### REFRESH group macros - v.1.0.0 (2024-11-07)
+### REFRESH group macros - v.1.0.1 (2024-11-08)
 
 ### Macros for initialization
 define INIT_GLOBALS
@@ -391,7 +391,7 @@ sbwt:
 
 ### Clean library targets
 clean-zlib-ng:
-	-cd $(ZLIB_DIR) && $(MAKE) -f Makefile.in clean
+	-cd $(ZLIB_DIR) && $(MAKE) -f Makefile.in clean && rm -r build-g++
 
 clean-isa-l:
 	-cd $(ISAL_DIR) && $(MAKE) -f Makefile.unx clean
@@ -513,5 +513,4 @@ _testing:
 	$(call show_var_opt,SBWT_SDSL_A)
 	$(call show_var_opt,SBWT_KMC_CORE_A)
 	$(call show_var_opt,SBWT_KMC_TOOLS_A)
-
 
