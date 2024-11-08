@@ -24,6 +24,7 @@ $(call ADD_MIMALLOC, $(3RD_PARTY_DIR)/mimalloc)
 $(call CHOOSE_GZIP_DECOMPRESSION)
 $(call SET_STATIC, $(STATIC_LINK))
 $(call SET_C_CPP_STANDARDS, c11, c++20)
+
 $(call SET_FLAGS, $(TYPE))
 
 $(call SET_COMPILER_VERSION_ALLOWED, GCC, Linux_x86_64, 10, 20)
@@ -43,7 +44,7 @@ MFASTA_TOOL_CPP_OBJS := $(MFASTA_TOOL_SRC_DIR)/mfasta-tool.cpp.o
 $(MULTI_FASTA_SPLIT_SRC_DIR)/multi-fasta-split.cpp.o: $(MULTI_FASTA_SPLIT_SRC_DIR)/multi-fasta-split.cpp
 
 $(MD5_DIR)/md5.c.o: $(MD5_DIR)/md5.c
-$(MFASTA_TOOL_SRC_DIR)/mfasta-tool.cpp.o: $(MFASTA_TOOL_SRC_DIR)/mfasta-tool.cpp
+$(MFASTA_TOOL_SRC_DIR)/mfasta-tool.cpp.o: $(MFASTA_TOOL_SRC_DIR)/mfasta-tool.cpp $(MFASTA_TOOL_SRC_DIR)/params.h $(MFASTA_TOOL_SRC_DIR)/data_source.h $(MFASTA_TOOL_SRC_DIR)/data_storer.h $(MFASTA_TOOL_SRC_DIR)/data_partitioner.h $(MFASTA_TOOL_SRC_DIR)/md5_filter.h $(MFASTA_TOOL_SRC_DIR)/part_packer.h
 
 
 # *** Source files build rules
