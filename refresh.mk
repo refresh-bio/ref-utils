@@ -259,7 +259,7 @@ define SET_FLAGS
 
 	$(eval C_FLAGS+=-std=$(C_STD) -Wall -fPIC -pthread -fpermissive $(PLATFORM_SPECIFIC_C_FLAGS))
 	$(eval CPP_FLAGS+=-std=$(CPP_STD) -Wall -fPIC -pthread -fpermissive $(PLATFORM_SPECIFIC_CPP_FLAGS))
-	$(eval LINKER_FLAGS+=-lm -lpthread $(PLATFORM_SPECIFIC_LINKER_FLAGS))
+	$(eval LINKER_FLAGS+=-lm -lpthread $(PLATFORM_SPECIFIC_LINKER_FLAGS) $(STATIC_LFLAGS))
 
 	$(if $(filter release,$(1)), \
 		$(eval OPTIMIZATION_FLAGS+=-O3) \
