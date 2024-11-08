@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\multi-fasta-split.cpp">
+    <ClCompile Include="multi-fasta-split.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
