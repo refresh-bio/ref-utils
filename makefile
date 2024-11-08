@@ -48,13 +48,13 @@ $(MFASTA_TOOL_SRC_DIR)/mfasta-tool.cpp.o: $(MFASTA_TOOL_SRC_DIR)/mfasta-tool.cpp
 
 
 # *** Source files build rules
-$(MULTI_FASTA_SPLIT_SRC_DIR)/%.cpp.o: $(MULTI_FASTA_SPLIT_SRC_DIR)/%.cpp
+$(MULTI_FASTA_SPLIT_SRC_DIR)/%.cpp.o: $(MULTI_FASTA_SPLIT_SRC_DIR)/%.cpp $(GZ_TARGET)
 	$(CXX) $(CPP_FLAGS) $(OPTIMIZATION_FLAGS) $(ARCH_FLAGS) $(INCLUDE_DIRS)  -c $< -o $@
 
 $(MD5_DIR)/%.c.o: $(MD5_DIR)/%.c
 	$(CC) $(C_FLAGS) $(OPTIMIZATION_FLAGS) $(ARCH_FLAGS) $(INCLUDE_DIRS) -c $< -o $@
 
-$(MFASTA_TOOL_SRC_DIR)/%.cpp.o: $(MFASTA_TOOL_SRC_DIR)/%.cpp
+$(MFASTA_TOOL_SRC_DIR)/%.cpp.o: $(MFASTA_TOOL_SRC_DIR)/%.cpp $(GZ_TARGET)
 	$(CXX) $(CPP_FLAGS) $(OPTIMIZATION_FLAGS) $(ARCH_FLAGS) $(INCLUDE_DIRS)  -c $< -o $@
 
 
