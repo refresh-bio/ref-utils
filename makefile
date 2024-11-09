@@ -5,7 +5,7 @@ include refresh.mk
 
 $(call INIT_SUBMODULES)
 $(call INIT_GLOBALS)
-$(call CHECK_OS_ARCH)
+$(call CHECK_OS_ARCH, $(PLATFORM))
 
 # *** Project directories
 3RD_PARTY_DIR := ./3rd_party
@@ -29,6 +29,7 @@ $(call CHOOSE_GZIP_DECOMPRESSION)
 $(call ADD_REFRESH_LIB, $(3RD_PARTY_DIR))
 $(call SET_STATIC, $(STATIC_LINK))
 $(call SET_C_CPP_STANDARDS, c11, c++20)
+$(call SET_GIT_COMMIT)
 
 $(call SET_FLAGS, $(TYPE))
 

@@ -1,4 +1,4 @@
-### REFRESH group macros - v.1.0.2 (2024-11-09)
+### REFRESH group macros - v.1.0.3 (2024-11-09)
 
 ### Macros for initialization
 define INIT_GLOBALS
@@ -9,9 +9,11 @@ define INIT_GLOBALS
 	$(eval LINKER_DIRS:=)
 	$(eval C_FLAGS:=)
 	$(eval CPP_FLAGS:=)
+	$(eval DEFINE_FLAGS:=)
 	$(eval LINKER_FLAGS:=)
 	$(eval CMAKE_OSX_FIX:=)
 	$(eval COMPILER_ALLOWED:=)
+	$(eval TYPE?=release)
 endef
 
 ### Macros for 3rd-party libraries registration
@@ -76,12 +78,13 @@ endef
 # Add igraph (!!! CHECK)
 define ADD_IGRAPH
 	$(info *** Adding igraph ***)
-	$(eval INCLUDE_DIRS+=-I$(1)/include)
+	$(eval INCLUDE_DIRS+=-I$(1)/include -I$(1)/build/include)
 	$(eval IGRAPH_DIR:=$(1))
 	$(eval IGRAPH_A_DIR:=$(1)/build/src)
 	$(eval IGRAPH_A:=$(IGRAPH_A_DIR)/libigraph.a)
 	$(eval LIBRARY_FILES+=$(IGRAPH_A))
 	$(eval LINKER_DIRS+=-L $(IGRAPH_A_DIR))
+	$(eval IGRAPH_TARGET:=igraph)
 endef
 
 # Add SBWT (!!! CHECK)
@@ -198,6 +201,10 @@ define IN_RANGE
 	$(shell if [ $(COMP) -ge $(MIN) ] && [ $(COMP) -le $(MAX) ]; then echo 1; else echo 0; fi)
 endef
 
+define SET_GIT_COMMIT
+	$(eval GIT_COMMIT:=$(shell git describe --always --dirty))
+	$(eval DEFINE_FLAGS:=-DGIT_COMMIT=$(GIT_COMMIT))
+endef
 
 # Check compiler version
 define CHECK_COMPILER_VERSION
@@ -289,7 +296,7 @@ define SET_FLAGS
 							$(eval C_FLAGS+=-fsanitize=leak) \
 							$(eval CPP_FLAGS+=-fsanitize=leak) \
 							$(eval LINKER_FLAGS+=-fsanitize=leak), \
-							$(if $(filter UBSan,$(1)), \
+							$(if $(filter MSan,$(1)), \
 								$(eval OPTIMIZATION_FLAGS+=-O3 -g) \
 								$(eval C_FLAGS+=-fsanitize=memory) \
 								$(eval CPP_FLAGS+=-fsanitize=memory) \
@@ -359,26 +366,29 @@ define CHECK_OS_ARCH
 
 	$(eval OS_ARCH_TYPE:=$(OS_TYPE)_$(ARCH_TYPE))
 
-	$(if $(filter arm8,$(PLATFORM)), \
+	$(if $(filter arm8,$(1)), \
 		$(eval ARCH_FLAGS:=-march=armv8-a -DARCH_ARM) \
 		$(info *** ARMv8 with NEON extensions ***), \
-		$(if $(filter m1,$(PLATFORM)), \
+		$(if $(filter m1,$(1)), \
 			$(eval ARCH_FLAGS:=-march=armv8.4-a -DARCH_ARM) \
 			$(info *** Apple M1 (or newer) with NEON extensions ***), \
-			$(if $(filter sse2,$(PLATFORM)), \
+			$(if $(filter sse2,$(1)), \
 				$(eval ARCH_FLAGS:=-msse2 -m64 -DARCH_X64) \
 				$(info *** x86-64 with SSE2 extensions ***), \
-				$(if $(filter avx,$(PLATFORM)), \
+				$(if $(filter avx,$(1)), \
 					$(eval ARCH_FLAGS:=-mavx -m64 -DARCH_X64) \
 					$(info *** x86-64 with AVX extensions ***), \
-					$(if $(filter avx2,$(PLATFORM)), \
+					$(if $(filter avx2,$(1)), \
 						$(eval ARCH_FLAGS:=-mavx2 -m64 -DARCH_X64) \
 						$(info *** x86-64 with AVX2 extensions ***), \
-						$(if $(filter x86_64,$(ARCH_TYPE)), \
-							$(eval ARCH_FLAGS:=-march=native -DARCH_X64) \
-							$(info *** Unspecified platform - using native compilation for x86_64 ***), \
-							$(eval ARCH_FLAGS:=-march=native -DARCH_ARM) \
-							$(info *** Unspecified platform - using native compilation for ARM ***)))))))
+						$(if $(filter avx512,$(1)), \
+							$(eval ARCH_FLAGS:=-mavx512 -m64 -DARCH_X64) \
+							$(info *** x86-64 with AVX512 extensions ***), \
+							$(if $(filter x86_64,$(ARCH_TYPE)), \
+								$(eval ARCH_FLAGS:=-march=native -DARCH_X64) \
+								$(info *** Unspecified platform - using native compilation for x86_64 ***), \
+								$(eval ARCH_FLAGS:=-march=native -DARCH_ARM) \
+								$(info *** Unspecified platform - using native compilation for ARM ***))))))))
 	
 	$(if $(filter Darwin,$(OS_TYPE)), \
 		$(eval SDK_PATH:=$(shell $(CXX) -v 2>&1 | grep -- '--with-sysroot' | sed -E 's/.*--with-sysroot=([^ ]+).*/\1/')) \
@@ -411,11 +421,11 @@ radule-inplace:
 	cd $(RADULS_DIR) && $(MAKE)
 
 igraph:
-	$(if Darwin,$(OS_TYPE),
-		$(eval IEEE754_DOUBLE_ENDIANNESS_MATCHES_FIX:=-DIEEE754_DOUBLE_ENDIANNESS_MATCHES=TRUE),
-		$(eval IEEE754_DOUBLE_ENDIANNESS_MATCHES_FIX:=),
+	$(if $(filter Darwin,$(OS_TYPE)), \
+		$(eval IEEE754_DOUBLE_ENDIANNESS_MATCHES_FIX:=-DIEEE754_DOUBLE_ENDIANNESS_MATCHES=TRUE), \
+		$(eval IEEE754_DOUBLE_ENDIANNESS_MATCHES_FIX:=) \
 	)
-	cd $(IGRAPH_DIR); cmake $(CMAKE_OSX_FIX) $(IEEE754_DOUBLE_ENDIANNESS_MATCHES_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -S libs/igraph -B libs/igraph/build; cmake --build libs/igraph/build
+	-mkdir $(IGRAPH_DIR)/build; cmake $(CMAKE_OSX_FIX) $(IEEE754_DOUBLE_ENDIANNESS_MATCHES_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -S $(IGRAPH_DIR) -B $(IGRAPH_DIR)/build; cmake --build $(IGRAPH_DIR)/build
 
 mimalloc_obj:
 	cd $(MIMALLOC_DIR) && $(CXX) -DMI_MALLOC_OVERRIDE -O3 -DNDEBUG -fPIC -Wall -Wextra -Wno-unknown-pragmas -fvisibility=hidden -ftls-model=initial-exec -fno-builtin-malloc -c -I include src/static.c -o mimalloc.o
@@ -493,6 +503,7 @@ _testing:
 	$(call show_var,C_FLAGS)
 	$(call show_var,CPP_FLAGS)
 	$(call show_var,OPTIMIZATION_FLAGS)
+	$(call show_var,DEFINE_FLAGS)
 	$(call show_var,LINKER_FLAGS)
 	$(call show_var,STATIC_LFLAGS)
 	$(call show_var,CPP_FLAGS_SSE2)
