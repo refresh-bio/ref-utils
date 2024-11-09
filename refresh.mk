@@ -1,9 +1,10 @@
-### REFRESH group macros - v.1.0.1 (2024-11-08)
+### REFRESH group macros - v.1.0.2 (2024-11-09)
 
 ### Macros for initialization
 define INIT_GLOBALS
 	$(info *** Initialization of global values ***)
 	$(eval INCLUDE_DIRS:=-I.)
+	$(eval REFRESH_DIR:=)
 	$(eval LIBRARY_FILES:=)
 	$(eval LINKER_DIRS:=)
 	$(eval C_FLAGS:=)
@@ -17,7 +18,6 @@ endef
 # Add zlib-ng
 define ADD_ZLIB_NG
 	$(info *** Adding zlib-ng ***)
-	$(eval INCLUDE_DIRS+=-I$(1)/build-g++/zlib-ng)
 	$(eval ZLIB_DIR:=$(1))
 	$(eval ZLIB_A_DIR:=$(1)/build-g++/zlib-ng)
 	$(eval ZLIB_A:=$(ZLIB_A_DIR)/libz.a)
@@ -26,7 +26,6 @@ endef
 # Add isa-l
 define ADD_ISAL
 	$(info *** Adding isal ***)
-	$(eval INCLUDE_DIRS+=-I$(1)/include)
 	$(eval ISAL_DIR:=$(1))
 	$(eval ISAL_A_DIR:=$(1)/bin)
 	$(eval ISAL_A:=$(1)/bin/isa-l.a)
@@ -102,7 +101,7 @@ endef
 # Add REFRESH libs
 define ADD_REFRESH_LIB
 	$(info *** Adding REFRESH libs ***)
-	$(eval INCLUDE_DIRS+=-I$(1))
+	$(eval REFRESH_DIR:=-I$(1))
 endef
 
 # Add StatsLib
@@ -202,6 +201,7 @@ endef
 
 # Check compiler version
 define CHECK_COMPILER_VERSION
+	$(info *** Checking compiler version ***)
 	$(eval COMPILER_DESC:=$(shell command -v $(CXX) >/dev/null 2>&1 && basename $(CXX) | sed 's/-.*//' || echo ""))
 
 	$(if $(COMPILER_DESC),,\
@@ -269,7 +269,37 @@ define SET_FLAGS
 			$(eval OPTIMIZATION_FLAGS+=-O0 -g) \
 			$(eval C_FLAGS+=) \
 			$(eval CPP_FLAGS+= ), \
-		)
+			$(if $(filter ASan,$(1)), \
+				$(eval OPTIMIZATION_FLAGS+=-O3 -g) \
+				$(eval C_FLAGS+=-fsanitize=address) \
+				$(eval CPP_FLAGS+=-fsanitize=address) \
+				$(eval LINKER_FLAGS+=-fsanitize=address), \
+				$(if $(filter TSan,$(1)), \
+					$(eval OPTIMIZATION_FLAGS+=-O3 -g) \
+					$(eval C_FLAGS+=-fsanitize=thread) \
+					$(eval CPP_FLAGS+=-fsanitize=thread) \
+					$(eval LINKER_FLAGS+=-fsanitize=thread -static-libgcc -static-libstdc++), \
+					$(if $(filter UBSan,$(1)), \
+						$(eval OPTIMIZATION_FLAGS+=-O3 -g) \
+						$(eval C_FLAGS+=-fsanitize=undefined) \
+						$(eval CPP_FLAGS+=-fsanitize=undefined) \
+						$(eval LINKER_FLAGS+=-fsanitize=undefined), \
+						$(if $(filter LSan,$(1)), \
+							$(eval OPTIMIZATION_FLAGS+=-O3 -g) \
+							$(eval C_FLAGS+=-fsanitize=leak) \
+							$(eval CPP_FLAGS+=-fsanitize=leak) \
+							$(eval LINKER_FLAGS+=-fsanitize=leak), \
+							$(if $(filter UBSan,$(1)), \
+								$(eval OPTIMIZATION_FLAGS+=-O3 -g) \
+								$(eval C_FLAGS+=-fsanitize=memory) \
+								$(eval CPP_FLAGS+=-fsanitize=memory) \
+								$(eval LINKER_FLAGS+=-fsanitize=memory), \
+							) \
+						) \
+					) \
+				) \
+			) \
+		) \
 	)
 
 	$(eval CPP_FLAGS_SSE2:=$(CPPFLAGS) -msse2)
@@ -277,7 +307,9 @@ define SET_FLAGS
 	$(eval CPP_FLAGS_AVX:=$(CPPFLAGS) -mavx)
 	$(eval CPP_FLAGS_AVX2:=$(CPPFLAGS) -mavx2)
 	$(eval CPP_FLAGS_AVX512:=$(CPPFLAGS) -mavx512)
-	$(eval CPP_FLAGS_NEON:=$(CPPFLAGS) -mneon)
+	$(eval CPP_FLAGS_NEON:=$(CPPFLAGS))
+
+	$(eval INCLUDE_DIRS+=$(REFRESH_DIR))
 endef
 
 
@@ -291,10 +323,13 @@ endef
 define CHOOSE_GZIP_DECOMPRESSION
 	$(if $(filter x86_64,$(ARCH_TYPE)), \
     	$(if $(and $(NASM_VERSION),$(ISAL_DIR)), \
-			$(eval GZ_TARGET:=isa-l), \
+			$(eval GZ_TARGET:=isa-l) \
+			$(eval INCLUDE_DIRS+=-I$(ISAL_DIR)/include) ,\
 			$(eval GZ_TARGET:=zlib-ng) \
+			$(eval INCLUDE_DIRS+=-I$(ZLIB_DIR)/build-g++) \
 		), \
 		$(eval GZ_TARGET:=zlib-ng) \
+		$(eval INCLUDE_DIRS+=-I$(ZLIB_DIR)/build-g++) \
   	)
 
 	$(if $(filter isa-l,$(GZ_TARGET)), \
