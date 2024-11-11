@@ -18,17 +18,11 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\3rd_party\md5\md5.c">
-      <Filter>Library Files</Filter>
-    </ClCompile>
     <ClCompile Include="mfasta-tool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\3rd_party\md5\md5.h">
-      <Filter>Library Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\3rd_party\refresh\compression\lib\file_wrapper.h">
       <Filter>Library Files</Filter>
     </ClInclude>
@@ -47,10 +41,7 @@
     <ClInclude Include="defs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="md5_filter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="md5_wrapper.h">
+    <ClInclude Include="sha256_filter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="params.h">
@@ -60,6 +51,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sha256.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

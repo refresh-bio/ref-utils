@@ -33,5 +33,5 @@ struct CParams
 	// *** Internal params
 	const size_t data_source_input_parts_size = 32;
 	const size_t soft_limit_size_in_part = 1 << 20;
-	const size_t input_queue_max_size = 64;
+	const size_t input_queue_max_size = 128;
 };

@@ -113,7 +113,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);REFRESH_USE_IGZIP;ARCH_X64</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalOptions>/D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,7 +129,9 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);REFRESH_USE_IGZIP;ARCH_X64</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalOptions>/D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,7 +141,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\3rd_party\md5\md5.c" />
     <ClCompile Include="mfasta-tool.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -151,17 +152,16 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\3rd_party\md5\md5.h" />
     <ClInclude Include="..\3rd_party\refresh\compression\lib\file_wrapper.h" />
     <ClInclude Include="..\3rd_party\refresh\compression\lib\gz_wrapper.h" />
     <ClInclude Include="data_partitioner.h" />
     <ClInclude Include="data_source.h" />
     <ClInclude Include="data_storer.h" />
     <ClInclude Include="defs.h" />
-    <ClInclude Include="md5_filter.h" />
-    <ClInclude Include="md5_wrapper.h" />
+    <ClInclude Include="sha256_filter.h" />
     <ClInclude Include="params.h" />
     <ClInclude Include="part_packer.h" />
+    <ClInclude Include="sha256.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

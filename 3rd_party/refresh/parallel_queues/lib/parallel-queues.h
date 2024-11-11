@@ -246,7 +246,8 @@ namespace refresh {
 			std::unique_lock<std::mutex> lck(mtx);
 			cv_push.wait(lck, [this, &priority] {
 				return map_data.size() < max_size - 1 ||
-					priority == current_priority;
+//					priority == current_priority;
+					priority <= current_priority;
 				});
 
 			if (queue_observer)

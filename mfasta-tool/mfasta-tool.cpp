@@ -7,7 +7,7 @@
 #include "data_source.h"
 #include "data_storer.h"
 #include "data_partitioner.h"
-#include "md5_filter.h"
+#include "sha256_filter.h"
 #include "part_packer.h"
 
 using namespace std;
@@ -59,7 +59,7 @@ bool parse_mode(int argc, char** argv)
 
 	if (argv[1] == "--version"s)
 	{
-		cerr << UTIL_VERSION << endl;
+		std::cerr << UTIL_VERSION << endl;
 		return true;
 	}
 
@@ -155,20 +155,20 @@ bool parse_args_mrds(int argc, char **argv)
 		}
 		else
 		{
-			cerr << "Unknown option: " << argv[i] << endl;
+			std::cerr << "Unknown option: " << argv[i] << endl;
 			return false;
 		}
 	}
 
 	if (params.in_names.empty())
 	{
-		cerr << "Input file name(s) must be provided\n";
+		std::cerr << "Input file name(s) must be provided\n";
 		return false;
 	}
 
 	if (params.out_name.empty() && params.n == 0)
 	{
-		cerr << "If you want to split the input you mut provide --part-size" << endl;
+		std::cerr << "If you want to split the input you mut provide --part-size" << endl;
 		return 0;
 	}
 
@@ -176,7 +176,7 @@ bool parse_args_mrds(int argc, char **argv)
 		params.in_prefixes.resize(params.in_names.size());
 	else if (params.in_prefixes.size() != params.in_names.size())
 	{
-		cerr << "No. of input prefixes (if provided) must be the same as no. of input names" << endl;
+		std::cerr << "No. of input prefixes (if provided) must be the same as no. of input names" << endl;
 		return false;
 	}
 
@@ -186,50 +186,84 @@ bool parse_args_mrds(int argc, char **argv)
 // *****************************************************************************************
 void usage()
 {
-	cerr << UTIL_VER << endl;
-	cerr << "Preprocess multi-FASTA files\n";
-	cerr << "Usage:\n";
-	cerr << "mfasta-tool <mode> [options]\n";
-	cerr << "Modes:\n";
-	cerr << "   mrds - merges a few input files with optional removal of duplicates and splitting into pieces of give size\n";
+	std::cerr << UTIL_VER << endl;
+	std::cerr << "Preprocess multi-FASTA files\n";
+	std::cerr << "Usage:\n";
+	std::cerr << "mfasta-tool <mode> [options]\n";
+	std::cerr << "Modes:\n";
+	std::cerr << "   mrds - merges a few input files with optional removal of duplicates and splitting into pieces of give size\n";
 }
 
 // *****************************************************************************************
 void usage_mrds()
 {
-	cerr << UTIL_VER << endl;
-	cerr << "Preprocess multi-FASTA files\n";
-	cerr << "Usage:\n";
-	cerr << "mfasta-tool mrds [options]\n";
-	cerr << "Options:\n";
-	cerr << "   -n | --part-size <int>        - no. of sequences in a single output file; 0 - no splitting (default: " << params.n << ")\n";
-	cerr << "   -o | --out-name <string>      - output name when no splitting is made (default: stdout)\n";
-	cerr << "   -i | --in-names <string>      - comma-separated list of input file names\n";
-	cerr << "   --in-prefixes <string>        - comma-separated list of prefixes for input file names (optional)\n";
-	cerr << "   -t | --no-threads <int>       - no. of threads (default: " << params.no_threads << ")\n";
-	cerr << "   --out-prefix <string>         - prefix of output file names (default: " << params.out_prefix << ")\n";
-	cerr << "   --out-suffix <string>         - suffix of output file names (default: " << params.out_suffix << ")\n";
-	cerr << "   --part-digits <int>           - no. of digits in part_id (default: " << params.part_digits << ")\n";
-	cerr << "   --gzipped-output              - gzip ouptut files (default: false)\n";
-	cerr << "   --gzip-level <int>            - compression level for output gzips (default: " << params.gzip_level << ")\n";
-	cerr << "   --verbosity <int>             - verbosity level (default: " << params.verbosity << ")\n";
-	cerr << "   --remove-empty-lines          - remove empty lines\n";
-	cerr << "   --remove-duplicates           - remove duplicated sequences (same MD5 checksum) (default: false)\n";
-	cerr << "   --rev-comp-as-equivalent      - when removing duplicates treat rev. comp. as equivalent (default: false)\n";
-	cerr << "   --out-duplicates <string>     - name of files with duplicates list (default: stdout)\n";
-	cerr << "   --mark-duplicates-orientation - mark duplicates orientation ('+' for direct, '-' for rev.comp) (default: false)\n";
-	cerr << "Example: mfasta-tool -n 1000 bacteria.fna\n";
+	std::cerr << UTIL_VER << endl;
+	std::cerr << "Preprocess multi-FASTA files\n";
+	std::cerr << "Usage:\n";
+	std::cerr << "mfasta-tool mrds [options]\n";
+	std::cerr << "Options:\n";
+	std::cerr << "   -n | --part-size <int>        - no. of sequences in a single output file; 0 - no splitting (default: " << params.n << ")\n";
+	std::cerr << "   -o | --out-name <string>      - output name when no splitting is made (default: stdout)\n";
+	std::cerr << "   -i | --in-names <string>      - comma-separated list of input file names\n";
+	std::cerr << "   --in-prefixes <string>        - comma-separated list of prefixes for input file names (optional)\n";
+	std::cerr << "   -t | --no-threads <int>       - no. of threads (default: " << params.no_threads << ")\n";
+	std::cerr << "   --out-prefix <string>         - prefix of output file names (default: " << params.out_prefix << ")\n";
+	std::cerr << "   --out-suffix <string>         - suffix of output file names (default: " << params.out_suffix << ")\n";
+	std::cerr << "   --part-digits <int>           - no. of digits in part_id (default: " << params.part_digits << ")\n";
+	std::cerr << "   --gzipped-output              - gzip ouptut files (default: false)\n";
+	std::cerr << "   --gzip-level <int>            - compression level for output gzips (default: " << params.gzip_level << ")\n";
+	std::cerr << "   --verbosity <int>             - verbosity level (default: " << params.verbosity << ")\n";
+	std::cerr << "   --remove-empty-lines          - remove empty lines\n";
+	std::cerr << "   --remove-duplicates           - remove duplicated sequences (same SHA256 checksum) (default: false)\n";
+	std::cerr << "   --rev-comp-as-equivalent      - when removing duplicates treat rev. comp. as equivalent (default: false)\n";
+	std::cerr << "   --out-duplicates <string>     - name of files with duplicates list (default: stdout)\n";
+	std::cerr << "   --mark-duplicates-orientation - mark duplicates orientation ('+' for direct, '-' for rev.comp) (default: false)\n";
+	std::cerr << "Example: mfasta-tool -n 1000 bacteria.fna\n";
 }
 
 // **************************************************
 void process_mrds()
 {
-	int no_packing_threads = params.no_threads;
+	uint32_t n_hashing_threads = 1;
+	uint32_t n_packing_threads = 1;
+	uint32_t n_min_threads = params.remove_duplicates ? 6 : 4;
 
-	parallel_queue<input_part_t> q_input_parts(params.input_queue_max_size, 1);
-	parallel_queue<input_part_t> q_filtered_parts(params.input_queue_max_size, 1);
+	uint32_t n_threads = std::max<uint32_t>(n_min_threads, params.no_threads);
+
+	if (params.remove_duplicates && params.gzipped_output)
+	{
+		uint32_t n = n_threads - 4;
+		
+		if (params.gzip_level <= 4)
+		{
+			n_hashing_threads = std::max<uint32_t>(1, n / 2);
+			n_packing_threads = std::max<uint32_t>(1, n - n_hashing_threads);
+		}
+		else if (params.gzip_level <= 6)
+		{
+			n_hashing_threads = std::max<uint32_t>(1, n / 3);
+			n_packing_threads = std::max<uint32_t>(1, n - n_hashing_threads);
+		}
+		else
+		{
+			n_hashing_threads = std::max<uint32_t>(1, n / 4);
+			n_packing_threads = std::max<uint32_t>(1, n - n_hashing_threads);
+		}
+	}
+	else if (params.remove_duplicates)
+	{
+		n_hashing_threads = n_min_threads - 5;
+	}
+	else if (params.gzipped_output)
+	{
+		n_packing_threads = n_min_threads - 3;
+	}
+
+	parallel_priority_queue<input_part_t> q_input_parts(params.input_queue_max_size, 1);
+	parallel_priority_queue<input_part_t> q_hashed_parts(params.input_queue_max_size, n_hashing_threads);
+	parallel_priority_queue<input_part_t> q_filtered_parts(params.input_queue_max_size, 1);
 	parallel_priority_queue<input_part_t> q_partitioned_parts(params.input_queue_max_size, 1);
-	parallel_priority_queue<packed_part_t> q_packed_parts(params.input_queue_max_size, no_packing_threads);
+	parallel_priority_queue<packed_part_t> q_packed_parts(params.input_queue_max_size, n_packing_threads);
 
 	size_t no_unique, no_duplicated, no_removed, no_stored;
 
@@ -238,12 +272,20 @@ void process_mrds()
 		data_source.run();
 		});
 
-	thread t_md5_filter([&q_input_parts, &q_filtered_parts, &no_unique, &no_duplicated, &no_removed] {
+	vector<thread> vt_sha256_hashers;
+	if (params.remove_duplicates)
+		for (int i = 0; i < n_hashing_threads; ++i)
+			vt_sha256_hashers.emplace_back([&q_input_parts, &q_hashed_parts] {
+			CSHA256Hasher part_hasher(q_input_parts, q_hashed_parts, params.rev_comp_as_equivalent);
+			part_hasher.run();
+				});
+
+	thread t_sha256_filter([&q_hashed_parts, &q_filtered_parts, &no_unique, &no_duplicated, &no_removed] {
 		if (params.remove_duplicates)
 		{
-			CMD5Filter md5_filter(params.rev_comp_as_equivalent, params.mark_duplicates_orientation, q_input_parts, q_filtered_parts, params.out_duplicates, params.data_source_input_parts_size);
-			md5_filter.run();
-			md5_filter.get_stats(no_unique, no_duplicated, no_removed);
+			CSHA256Filter sha256_filter(params.rev_comp_as_equivalent, params.mark_duplicates_orientation, q_hashed_parts, q_filtered_parts, params.out_duplicates, params.data_source_input_parts_size);
+			sha256_filter.run();
+			sha256_filter.get_stats(no_unique, no_duplicated, no_removed);
 		}
 		});
 
@@ -253,7 +295,7 @@ void process_mrds()
 	});
 
 	vector<thread> vt_data_packers;
-	for (int i = 0; i < no_packing_threads; ++i)
+	for (int i = 0; i < n_packing_threads; ++i)
 		vt_data_packers.emplace_back([&q_partitioned_parts, &q_packed_parts] {
 		CPartPacker part_packer(q_partitioned_parts, q_packed_parts, params.gzipped_output, params.gzip_level);
 		part_packer.run();
@@ -266,29 +308,55 @@ void process_mrds()
 		});
 
 	t_data_source.join();
-	t_md5_filter.join();
+	t_sha256_filter.join();
 	t_data_partitioner.join();
+	for (auto& t : vt_sha256_hashers)
+		t.join();
 	for (auto& t : vt_data_packers)
 		t.join();
 	t_data_storer.join();
 
-	cerr << "*** Stats" << endl;
-	cerr << "No. input sequences: " << no_unique + no_duplicated + no_removed << endl;
+	std::cerr << "*** Stats" << endl;
+	std::cerr << "No. input sequences: " << no_unique + no_duplicated + no_removed << endl;
 	if (params.remove_duplicates)
 	{
-		cerr << "   unique          : " << no_unique << endl;
-		cerr << "   duplicated      : " << no_duplicated << endl;
-		cerr << "   removed         : " << no_removed << endl;
-		cerr << "   preserved       : " << no_stored << endl;
+		std::cerr << "   unique          : " << no_unique << endl;
+		std::cerr << "   duplicated      : " << no_duplicated << endl;
+		std::cerr << "   removed         : " << no_removed << endl;
+		std::cerr << "   preserved       : " << no_stored << endl;
 	}
 
 	if(params.out_name.empty())
-		cerr << "No. parts          : " << (no_stored + params.n - 1) / params.n;
+		std::cerr << "No. parts          : " << (no_stored + params.n - 1) / params.n;
 }
 
 // *****************************************************************************************
 int main(int argc, char** argv)
 {
+	SHA256 sha;
+
+	FILE* f = fopen(argv[1], "rb");
+	char buf[100000];
+
+	while (!feof(f))
+	{
+		auto readed = fread(buf, 1, 156, f);
+		if (!readed)
+			break;
+		sha.update(buf, readed);
+	}
+	sha.finalize();
+
+	auto h = sha.get_hash();
+	for (auto x : h)
+	{
+		for (uint32_t i = 0; i < 8; ++i)
+			cout << "0123456789ABCDEF"[(x >> (28 - 4 * i)) & 0xf];
+	}
+
+	return 0;
+
+
 	if (!parse_mode(argc, argv))
 	{
 		usage();

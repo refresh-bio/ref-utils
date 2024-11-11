@@ -4,16 +4,20 @@
 #include <vector>
 #include <cinttypes>
 
+#include "sha256.h"
+
 using namespace std;
 
 struct input_item_t
 {
 	string id;
 	string prefix;
+	refresh::SHA256::sha256_t hash{};
+	bool hash_orientation_fwd;
 	vector<string> lines;
 
 	input_item_t(const string& id, const string &prefix, const vector<string>& lines) :
-		id(id), prefix(prefix), lines(lines)
+		id(id), prefix(prefix), hash{}, hash_orientation_fwd(true), lines(lines)
 	{}
 };
 
@@ -47,18 +51,3 @@ struct packed_part_t
 			memory_block.shrink_to_fit();
 	}
 };
-
-/*struct partitioned_part_t
-{
-	size_t priority = 0;
-	input_part_t part;
-
-	partitioned_part_t() = default;
-
-	partitioned_part_t(const size_t priority, const input_part_t& part) :
-		priority(priority),
-		part(part)
-	{}
-};
-
-*/

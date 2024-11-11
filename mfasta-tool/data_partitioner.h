@@ -6,12 +6,12 @@
 
 class CDataPartitioner
 {
-	parallel_queue<input_part_t>& q_input_parts;
+	parallel_priority_queue<input_part_t>& q_input_parts;
 	parallel_priority_queue<input_part_t>& q_partitioned_parts;
 	size_t n_in_part;
 
 public:
-	CDataPartitioner(parallel_queue<input_part_t>& q_input_parts, parallel_priority_queue<input_part_t>& q_partitioned_parts, size_t n_in_part) :
+	CDataPartitioner(parallel_priority_queue<input_part_t>& q_input_parts, parallel_priority_queue<input_part_t>& q_partitioned_parts, size_t n_in_part) :
 		q_input_parts(q_input_parts),
 		q_partitioned_parts(q_partitioned_parts),
 		n_in_part(n_in_part)

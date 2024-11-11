@@ -41,7 +41,7 @@ class CDataStorer
 			return false;
 		}
 
-		setvbuf(out, nullptr, _IOFBF, 4 << 20);
+		setvbuf(out, nullptr, _IOFBF, 16 << 20);
 		
 		return true;
 	}
