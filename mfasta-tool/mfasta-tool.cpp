@@ -333,30 +333,6 @@ void process_mrds()
 // *****************************************************************************************
 int main(int argc, char** argv)
 {
-	SHA256 sha;
-
-	FILE* f = fopen(argv[1], "rb");
-	char buf[100000];
-
-	while (!feof(f))
-	{
-		auto readed = fread(buf, 1, 156, f);
-		if (!readed)
-			break;
-		sha.update(buf, readed);
-	}
-	sha.finalize();
-
-	auto h = sha.get_hash();
-	for (auto x : h)
-	{
-		for (uint32_t i = 0; i < 8; ++i)
-			cout << "0123456789ABCDEF"[(x >> (28 - 4 * i)) & 0xf];
-	}
-
-	return 0;
-
-
 	if (!parse_mode(argc, argv))
 	{
 		usage();
