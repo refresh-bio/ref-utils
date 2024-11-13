@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{6a85a95a-ecee-4853-982d-9b740903c19b}</ProjectGuid>
-    <RootNamespace>multifastasplit</RootNamespace>
+    <ProjectGuid>{153220b9-5a09-4c86-886d-3ca399125a45}</ProjectGuid>
+    <RootNamespace>prebuild</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -70,14 +70,6 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>../3rd_party/;../3rd_party/isa-l/include;../3rd_party/libdeflate;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <LibraryPath>../3rd_party/libdeflate;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>../3rd_party/;../3rd_party/isa-l/include;../3rd_party/libdeflate;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <LibraryPath>../3rd_party/libdeflate;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
-  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -112,12 +104,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalOptions>/D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PreBuildEvent>
+      <Command>call $(SolutionDir)libs\prebuild.bat $(SolutionDir) $(Configuration)</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -127,7 +121,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalOptions>/D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -135,17 +128,20 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PreBuildEvent>
+      <Command>call $(SolutionDir)3rd_party\prebuild.bat $(SolutionDir) $(Configuration)</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ProjectReference Include="..\3rd_party\isa-l\isa-l-vc.vcxproj">
-      <Project>{68837f79-3d7f-4f4a-af10-99383b70f7a9}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\3rd_party\libdeflate\build-vs\libdeflate_static.vcxproj">
-      <Project>{0df64642-6604-30b0-9ffa-1bb593ba2cb1}</Project>
-    </ProjectReference>
+    <ClCompile Include="_prebuild.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="multi-fasta-split.cpp" />
+    <ProjectReference Include="..\..\3rd_party\isa-l\isa-l-vc.vcxproj">
+      <Project>{68837f79-3d7f-4f4a-af10-99383b70f7a9}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\3rd_party\libdeflate\build-vs\libdeflate_static.vcxproj">
+      <Project>{0df64642-6604-30b0-9ffa-1bb593ba2cb1}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

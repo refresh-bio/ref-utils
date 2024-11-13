@@ -1,4 +1,4 @@
-### REFRESH group macros - v.1.0.3 (2024-11-09)
+### REFRESH group macros - v.1.0.5 (2024-11-13)
 
 ### Macros for initialization
 define INIT_GLOBALS
@@ -14,6 +14,10 @@ define INIT_GLOBALS
 	$(eval CMAKE_OSX_FIX:=)
 	$(eval COMPILER_ALLOWED:=)
 	$(eval TYPE?=release)
+	$(eval PREBUILD_JOBS:=)
+	$(eval SRC_DIR:=./src)
+	$(eval OBJ_DIR:=./obj)
+	$(eval OUT_BIN_DIR:=./bin)
 endef
 
 ### Macros for 3rd-party libraries registration
@@ -23,11 +27,23 @@ define ADD_ZLIB_NG
 	$(eval ZLIB_DIR:=$(1))
 	$(eval ZLIB_A_DIR:=$(1)/build-g++/zlib-ng)
 	$(eval ZLIB_A:=$(ZLIB_A_DIR)/libz.a)
+	$(eval INCLUDE_DIRS+=-I$(ZLIB_DIR)/build-g++)
+	$(eval LIBRARY_FILES+=$(ZLIB_A))
+	$(eval LINKER_DIRS+=-L $(ZLIB_A_DIR))
+	$(eval PREBUILD_JOBS+=zlib-ng)
 endef
 
-# Add isa-l
-define ADD_ISAL
-	$(info *** Adding isal ***)
+# Propose zlib-ng (to be considered by CHOOSE_...)
+define PROPOSE_ZLIB_NG
+	$(info *** Proposing zlib-ng ***)
+	$(eval ZLIB_DIR:=$(1))
+	$(eval ZLIB_A_DIR:=$(1)/build-g++/zlib-ng)
+	$(eval ZLIB_A:=$(ZLIB_A_DIR)/libz.a)
+endef
+
+# Propose isa-l (to be considered by CHOOSE_...)
+define PROPOSE_ISAL
+	$(info *** Proposing isal ***)
 	$(eval ISAL_DIR:=$(1))
 	$(eval ISAL_A_DIR:=$(1)/bin)
 	$(eval ISAL_A:=$(1)/bin/isa-l.a)
@@ -42,6 +58,8 @@ define ADD_LIBDEFLATE
 	$(eval LIBDEFLATE_A:=$(1)/build/libdeflate.a)
 	$(eval LIBRARY_FILES+=$(LIBDEFLATE_A))
 	$(eval LINKER_DIRS+=-L $(LIBDEFLATE_A_DIR))
+	$(call TEST_SOFT,cmake)
+	$(eval PREBUILD_JOBS+=libdeflate)
 endef
 
 # Add zstd	(!!! CHECK)
@@ -53,15 +71,35 @@ define ADD_LIBZSTD
 	$(eval LIBZSTD_A:=$(1)/lib/libzstd.a)
 	$(eval LIBRARY_FILES+=$(LIBZSTD_A))
 	$(eval LINKER_DIRS+=-L $(LIBZSTD_A_DIR))
+	$(eval PREBUILD_JOBS+=libzstd)
 endef
 
 # Add mimalloc
 define ADD_MIMALLOC
 	$(info *** Adding mimalloc ***)
-	$(eval MIMALLOC_INCLUDE_DIR:=$(1/include))
+	$(eval MIMALLOC_INCLUDE_DIR:=$(1)/include)
 	$(eval INCLUDE_DIRS+=-I$(1)/include)
 	$(eval MIMALLOC_DIR:=$(1))
 	$(eval MIMALLOC_OBJ:=$(1)/mimalloc.o)
+	$(eval PREBUILD_JOBS+=mimalloc_obj)
+endef
+
+# Add cdflib
+define ADD_CDFLIB
+	$(info *** Adding cdflib ***)
+	$(eval CDFLIB_INCLUDE_DIR:=$(1))
+	$(eval INCLUDE_DIRS+=-I$(1))
+	$(eval CDFLIB_DIR:=$(1))
+	$(eval CDFLIB_OBJ:=$(1)/cdflib.cpp.o)
+	$(eval PREBUILD_JOBS+=cdflib_obj)
+endef
+
+# Add REFRESH - parallel queues monitor
+define ADD_REFRESH_PARALLEL_QUEUES_MONITOR
+	$(info *** Adding refresh - parallel queues monitor ***)
+	$(eval ADD_REFRESH_PARALLEL_QUEUES_MONITOR_DIR:=$(1)/refresh/parallel_queues/lib/)
+	$(eval ADD_REFRESH_PARALLEL_QUEUES_MONITOR_OBJ:=$(1)/refresh/parallel_queues/lib/parallel-queues-monitor.cpp.o)
+	$(eval PREBUILD_JOBS+=refresh_parallel_queues_monitor_obj)
 endef
 
 # Add RADULS-inplace (!!! CHECK)
@@ -73,9 +111,10 @@ define ADD_RADULS_INPLACE
 	$(eval RADULS_INPLACE_A:=$(1)/Raduls/libraduls.a)
 	$(eval LIBRARY_FILES+=$(RADULS_INPLACE_A))
 	$(eval LINKER_DIRS+=-L $(RADULS_INPLACE_A_DIR))
+	$(eval PREBUILD_JOBS+=raduls-inplace)
 endef
 
-# Add igraph (!!! CHECK)
+# Add igraph
 define ADD_IGRAPH
 	$(info *** Adding igraph ***)
 	$(eval INCLUDE_DIRS+=-I$(1)/include -I$(1)/build/include)
@@ -85,12 +124,16 @@ define ADD_IGRAPH
 	$(eval LIBRARY_FILES+=$(IGRAPH_A))
 	$(eval LINKER_DIRS+=-L $(IGRAPH_A_DIR))
 	$(eval IGRAPH_TARGET:=igraph)
+	$(call TEST_SOFT,cmake)
+	$(call TEST_SOFT,bison)
+	$(call TEST_SOFT,flex)
+	$(eval PREBUILD_JOBS+=igraph)
 endef
 
-# Add SBWT (!!! CHECK)
+# Add SBWT
 define ADD_SBWT
 	$(info *** Adding SBWT ***)
-	$(eval INCLUDE_DIRS+=-I$(1)/include)
+	$(eval INCLUDE_DIRS+=-I$(1)/include -I$(1)/sdsl-lite/include -I$(1)/SeqIO/include -I$(1)/build/external/sdsl-lite/build/external/libdivsufsort/include/)
 	$(eval SBWT_DIR:=$(1))
 	$(eval SBWT_A_DIR:=$(1)/build)
 	$(eval SBWT_A:=$(SBWT_A_DIR)/libsbwt_static.a)
@@ -99,6 +142,7 @@ define ADD_SBWT
 	$(eval SBWT_KMC_TOOLS_A:=$(SBWT_A_DIR)/external/KMC/build/libkmc_tools.a)
 	$(eval LIBRARY_FILES+=$(SBWT_A) $(SBWT_SDSL_A) $(SBWT_KMC_CORE_A) $(SBWT_KMC_TOOLS_A))
 	$(eval LINKER_DIRS+=-L $(SBWT_A_DIR))
+	$(eval PREBUILD_JOBS+=sbwt)
 endef
 
 # Add REFRESH libs
@@ -188,6 +232,13 @@ define SET_COMPILER_VERSION_ALLOWED
 	$(eval COMPILER_ALLOWED+=COMPILER_VERSION_$(strip $(1))_$(strip $(2)))
 endef
 
+# Set source, object and binary directories
+define SET_SRC_OBJ_BIN
+	$(eval SRC_DIR:=$(1))
+	$(eval OBJ_DIR:=$(2))
+	$(eval OUT_BIN_DIR:=$(3))
+endef
+
 # *** Utility functions
 define LESS_THAN
 	$(if $(filter 0,$(shell [ $(1) -lt $(2) ]; echo $$?)),1,0)
@@ -201,9 +252,45 @@ define IN_RANGE
 	$(shell if [ $(COMP) -ge $(MIN) ] && [ $(COMP) -le $(MAX) ]; then echo 1; else echo 0; fi)
 endef
 
+define TEST_SOFT
+	$(if $(shell command -v $(1) >/dev/null 2>&1 && echo found),, \
+		$(error The required software '$(1)' is not installed or not in PATH))
+endef
+
+# Check Git commit id and set GIT_COMMIT macro for compilation rule
 define SET_GIT_COMMIT
 	$(eval GIT_COMMIT:=$(shell git describe --always --dirty))
 	$(eval DEFINE_FLAGS:=-DGIT_COMMIT=$(GIT_COMMIT))
+endef
+
+# Prepare file variables
+define LOAD_FILES
+$(eval SRC_$(1)_DIR := $(SRC_DIR)/$(2))                              
+$(eval OBJ_$(1)_DIR := $(OBJ_DIR)/$(2))                              
+$(eval SRC_$(1) := $(wildcard $(SRC_$(1)_DIR)/*.cpp))         
+$(eval OBJ_$(1) := $(patsubst $(SRC_$(1)_DIR)/%.cpp, $(OBJ_$(1)_DIR)/%.cpp.o, $(SRC_$(1)))) 
+endef
+
+# Dynamic creation of build rules
+define DEFAULT_COMPILE_RULE =
+$(OBJ_$(1)_DIR)/%.cpp.o: $(SRC_$(1)_DIR)/%.cpp | prebuild
+	@mkdir -p $(OBJ_$(1)_DIR)
+	$(CXX) $(CPP_FLAGS) $(OPTIMIZATION_FLAGS) $(DEFINE_FLAGS) $(INCLUDE_DIRS) -MMD -MF $$@.d -c $$< -o $$@
+endef
+
+# Dynamic creation of build rules for files in directory
+define PREPARE_DEFAULT_COMPILE_RULE
+# Source files
+$(eval SRC_$(1)_DIR := $(SRC_DIR)/$(2))                              
+$(eval OBJ_$(1)_DIR := $(OBJ_DIR)/$(2))                              
+$(eval SRC_$(1) := $(wildcard $(SRC_$(1)_DIR)/*.cpp))         
+$(eval OBJ_$(1) := $(patsubst $(SRC_$(1)_DIR)/%.cpp, $(OBJ_$(1)_DIR)/%.cpp.o, $(SRC_$(1)))) 
+# Compilation rule
+$(OBJ_$(1)_DIR)/%.cpp.o: $(SRC_$(1)_DIR)/%.cpp | prebuild
+	mkdir -p $(OBJ_$(1)_DIR)
+	$(CXX) $(CPP_FLAGS) $(OPTIMIZATION_FLAGS) $(ARCH_FLAGS) $(DEFINE_FLAGS) $(INCLUDE_DIRS) -MMD -MF $$@.d -c $$< -o $$@
+# Dependency files
+-include $(OBJ_$(1):.o=.o.d)
 endef
 
 # Check compiler version
@@ -317,6 +404,8 @@ define SET_FLAGS
 	$(eval CPP_FLAGS_NEON:=$(CPPFLAGS))
 
 	$(eval INCLUDE_DIRS+=$(REFRESH_DIR))
+	$(info Prebuild jobs: $(PREBUILD_JOBS))
+prebuild: $(PREBUILD_JOBS)
 endef
 
 
@@ -331,11 +420,14 @@ define CHOOSE_GZIP_DECOMPRESSION
 	$(if $(filter x86_64,$(ARCH_TYPE)), \
     	$(if $(and $(NASM_VERSION),$(ISAL_DIR)), \
 			$(eval GZ_TARGET:=isa-l) \
+			$(eval PREBUILD_JOBS+=isa-l) \
 			$(eval INCLUDE_DIRS+=-I$(ISAL_DIR)/include) ,\
 			$(eval GZ_TARGET:=zlib-ng) \
+			$(eval PREBUILD_JOBS+=zlib-ng) \
 			$(eval INCLUDE_DIRS+=-I$(ZLIB_DIR)/build-g++) \
 		), \
 		$(eval GZ_TARGET:=zlib-ng) \
+		$(eval PREBUILD_JOBS+=zlib-ng) \
 		$(eval INCLUDE_DIRS+=-I$(ZLIB_DIR)/build-g++) \
   	)
 
@@ -406,18 +498,18 @@ endef
 
 ### Library targets
 zlib-ng:
-	cd $(ZLIB_DIR); cmake $(CMAKE_OSX_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build-g++/zlib-ng -S . -DZLIB_COMPAT=ON; cmake --build build-g++/zlib-ng --config Release
+	cd $(ZLIB_DIR) && cmake $(CMAKE_OSX_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build-g++/zlib-ng -S . -DZLIB_COMPAT=ON; cmake --build build-g++/zlib-ng --config Release
 
 isa-l:
 	cd $(ISAL_DIR) && $(MAKE) -f Makefile.unx
 
 libdeflate:
-	cd $(LIBDEFLATE_DIR) && cmake $(CMAKE_OSX_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build && cmake --build build
+	cd $(LIBDEFLATE_DIR) && cmake $(CMAKE_OSX_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -DLIBDEFLATE_BUILD_SHARED_LIB=OFF -DLIBDEFLATE_BUILD_GZIP=OFF -B build && cmake --build build
 
 libzstd:
 	cd $(LIBZSTD_DIR) && $(MAKE)
 
-radule-inplace:
+raduls-inplace:
 	cd $(RADULS_DIR) && $(MAKE)
 
 igraph:
@@ -425,13 +517,19 @@ igraph:
 		$(eval IEEE754_DOUBLE_ENDIANNESS_MATCHES_FIX:=-DIEEE754_DOUBLE_ENDIANNESS_MATCHES=TRUE), \
 		$(eval IEEE754_DOUBLE_ENDIANNESS_MATCHES_FIX:=) \
 	)
-	-mkdir $(IGRAPH_DIR)/build; cmake $(CMAKE_OSX_FIX) $(IEEE754_DOUBLE_ENDIANNESS_MATCHES_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -S $(IGRAPH_DIR) -B $(IGRAPH_DIR)/build; cmake --build $(IGRAPH_DIR)/build
+	-mkdir $(IGRAPH_DIR)/build && cmake $(CMAKE_OSX_FIX) $(IEEE754_DOUBLE_ENDIANNESS_MATCHES_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -S $(IGRAPH_DIR) -B $(IGRAPH_DIR)/build && cmake --build $(IGRAPH_DIR)/build
 
 mimalloc_obj:
 	cd $(MIMALLOC_DIR) && $(CXX) -DMI_MALLOC_OVERRIDE -O3 -DNDEBUG -fPIC -Wall -Wextra -Wno-unknown-pragmas -fvisibility=hidden -ftls-model=initial-exec -fno-builtin-malloc -c -I include src/static.c -o mimalloc.o
 
+cdflib_obj:
+	cd $(CDFLIB_DIR) && $(CXX) $(CPP_FLAGS) $(OPTIMIZATION_FLAGS) $(DEFINE_FLAGS) $(INCLUDE_DIRS) -c cdflib.cpp -o cdflib.cpp.o
+
+refresh_parallel_queues_monitor_obj:
+	cd $(ADD_REFRESH_PARALLEL_QUEUES_MONITOR_DIR) && $(CXX) $(CPP_FLAGS) $(OPTIMIZATION_FLAGS) $(DEFINE_FLAGS) $(INCLUDE_DIRS) -c parallel-queues-monitor.cpp -o parallel-queues-monitor.cpp.o
+
 sbwt:
-	cd $(SBWT_DIR)/SBWT/build; cmake $(CMAKE_OSX_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) .. -DMAX_KMER_LENGTH=32; $(MAKE) -j
+	-mkdir $(SBWT_DIR)/build &&	cd $(SBWT_DIR)/build && cmake $(CMAKE_OSX_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) .. -DMAX_KMER_LENGTH=32 && $(MAKE) -j
 
 
 ### Clean library targets
@@ -447,7 +545,7 @@ clean-libdeflate:
 clean-libzstd:
 	-cd $(LIBZSTD_DIR) && $(MAKE) clean
 
-clean-radule-inplace:
+clean-raduls-inplace:
 	-cd $(RADULS_DIR) && $(MAKE) clean
 
 clean-igraph:
@@ -456,12 +554,18 @@ clean-igraph:
 clean-mimalloc_obj:
 	-rm $(MIMALLOC_OBJ)
 
+clean-cdflib_obj:
+	-rm $(CDFLIB_OBJ)
+
+clean-refresh_parallel_queues_monitor_obj:
+	-rm $(CDFLIB_OBJ)
+
 clean-sbwt:
 	-rm $(SBWT_A)
 	-rm $(SBWT_SDSL_A)
 	-rm $(SBWT_KMC_CORE_A)
 	-rm $(SBWT_KMC_TOOLS_A)
-
+	-rm -r $(SBWT_A_DIR)
 
 ### Testing
 define show_var
@@ -512,6 +616,19 @@ _testing:
 	$(call show_var,CPP_FLAGS_AVX2)
 	$(call show_var,CPP_FLAGS_AVX512)
 	$(call show_var,CPP_FLAGS_NEON)
+
+	$(info *** Files ***)
+	$(call show_var,SRC_DIR)
+	$(call show_var,OBJ_DIR)
+	$(call show_var,OUT_BIN_DIR)
+	$(call show_var,FILES_DEFINED)
+	$(foreach item,\
+		$(wordlist 1,$(words $(FILES_DEFINED)),$(FILES_DEFINED)), \
+		$(call show_var,SRC_$(item)_DIR) \
+		$(call show_var,OBJ_$(item)_DIR) \
+		$(call show_var,SRC_$(item)) \
+		$(call show_var,OBJ_$(item)) \
+		)
 
 	$(info *** Libraries ***)
 	$(info * gzip decompression *)

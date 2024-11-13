@@ -8,16 +8,8 @@ $(call INIT_GLOBALS)
 $(call CHECK_OS_ARCH, $(PLATFORM))
 
 # *** Project directories
+$(call SET_SRC_OBJ_BIN,src,obj,bin)
 3RD_PARTY_DIR := ./3rd_party
-SRC_MD5_DIR := $(3RD_PARTY_DIR)/md5
-OBJ_MD5_DIR := ./obj/md5
-OUT_BIN_DIR := ./bin
-OBJ_DIR := ./obj
-
-SRC_MFASTA_TOOL_DIR := ./mfasta-tool
-OBJ_MFASTA_TOOL_DIR := ./obj/mfasta-tool
-SRC_MULTI_FASTA_SPLIT_DIR := ./multi-fasta-split
-OBJ_MULTI_FASTA_SPLIT_DIR := ./obj/multi-fasta-split
 
 # *** Project configuration
 $(call CHECK_NASM)
@@ -42,31 +34,9 @@ ifneq ($(MAKECMDGOALS),clean)
 $(call CHECK_COMPILER_VERSION)
 endif
 
-# *** Source files
-SRC_MD5 := $(wildcard $(SRC_MD5_DIR)/*.c)
-OBJ_MD5 := $(patsubst $(SRC_MD5_DIR)/%.c, $(OBJ_MD5_DIR)/%.c.o, $(SRC_MD5))
-
-SRC_MFASTA_TOOL := $(wildcard $(SRC_MFASTA_TOOL_DIR)/*.cpp)
-OBJ_MFASTA_TOOL := $(patsubst $(SRC_MFASTA_TOOL_DIR)/%.cpp, $(OBJ_MFASTA_TOOL_DIR)/%.cpp.o, $(SRC_MFASTA_TOOL))
-
-SRC_MULTI_FASTA_SPLIT := $(wildcard $(SRC_MULTI_FASTA_SPLIT_DIR)/*.cpp)
-OBJ_MULTI_FASTA_SPLIT := $(patsubst $(SRC_MULTI_FASTA_SPLIT_DIR)/%.cpp, $(OBJ_MULTI_FASTA_SPLIT_DIR)/%.cpp.o, $(SRC_MULTI_FASTA_SPLIT))
-
-# *** Build rules
-$(OBJ_MD5_DIR)/%.c.o: $(SRC_MD5_DIR)/%.c
-	@mkdir -p $(OBJ_MD5_DIR)
-	$(CXX) $(CPP_FLAGS) $(OPTIMIZATION_FLAGS) $(ARCH_FLAGS) $(INCLUDE_DIRS) -MMD -MF $@.d -c $< -o $@
-$(OBJ_MFASTA_TOOL_DIR)/%.cpp.o: $(SRC_MFASTA_TOOL_DIR)/%.cpp | $(GZ_TARGET)
-	@mkdir -p $(OBJ_MFASTA_TOOL_DIR)
-	$(CXX) $(CPP_FLAGS) $(OPTIMIZATION_FLAGS) $(ARCH_FLAGS) $(INCLUDE_DIRS) -MMD -MF $@.d -c $< -o $@
-$(OBJ_MULTI_FASTA_SPLIT_DIR)/%.cpp.o: $(SRC_MULTI_FASTA_SPLIT_DIR)/%.cpp | $(GZ_TARGET)
-	@mkdir -p $(OBJ_MULTI_FASTA_SPLIT_DIR)
-	$(CXX) $(CPP_FLAGS) $(OPTIMIZATION_FLAGS) $(ARCH_FLAGS) $(INCLUDE_DIRS) -MMD -MF $@.d -c $< -o $@
-
-# Dependency files
--include $(OBJ_MD5:.o=.o.d)
--include $(OBJ_MFASTA_TOOL:.o=.o.d)
--include $(OBJ_MULTI_FASTA_SPLIT:.o=.o.d)
+# *** Source files and rules
+$(eval $(call PREPARE_DEFAULT_COMPILE_RULE,MFASTA_TOOL,mfasta-tool))
+$(eval $(call PREPARE_DEFAULT_COMPILE_RULE,MULTI_FASTA_SPLIT,multi-fasta-split))
 
 # *** Targets
 multi-fasta-split: $(OUT_BIN_DIR)/multi-fasta-split
@@ -77,23 +47,17 @@ $(OUT_BIN_DIR)/multi-fasta-split: $(GZ_TARGET) mimalloc_obj libdeflate \
 	$(CXX) -o $@  \
 	$(MIMALLOC_OBJ) \
 	$(OBJ_MULTI_FASTA_SPLIT) \
-	$(LIBRARY_FILES) \
-	$(LINKER_FLAGS) \
-	$(LINKER_DIRS)
+	$(LIBRARY_FILES) $(LINKER_FLAGS) $(LINKER_DIRS)
 
 mfasta-tool:  $(OUT_BIN_DIR)/mfasta-tool
 
 $(OUT_BIN_DIR)/mfasta-tool: $(GZ_TARGET) mimalloc_obj libdeflate \
-	$(OBJ_MD5) \
 	$(OBJ_MFASTA_TOOL) 
 	-mkdir -p $(OUT_BIN_DIR)	
 	$(CXX) -o $@  \
 	$(MIMALLOC_OBJ) \
-	$(OBJ_MD5) \
 	$(OBJ_MFASTA_TOOL) \
-	$(LIBRARY_FILES) \
-	$(LINKER_FLAGS) \
-	$(LINKER_DIRS)
+	$(LIBRARY_FILES) $(LINKER_FLAGS) $(LINKER_DIRS)
 
 
 # *** Cleaning
