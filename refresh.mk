@@ -1,4 +1,4 @@
-### REFRESH group macros - v.1.0.5 (2024-11-13)
+### REFRESH group macros - v.1.0.8 (2024-11-19)
 
 ### Macros for initialization
 define INIT_GLOBALS
@@ -9,6 +9,7 @@ define INIT_GLOBALS
 	$(eval LINKER_DIRS:=)
 	$(eval C_FLAGS:=)
 	$(eval CPP_FLAGS:=)
+	$(eval PY_FLAGS:=)
 	$(eval DEFINE_FLAGS:=)
 	$(eval LINKER_FLAGS:=)
 	$(eval CMAKE_OSX_FIX:=)
@@ -18,6 +19,8 @@ define INIT_GLOBALS
 	$(eval SRC_DIR:=./src)
 	$(eval OBJ_DIR:=./obj)
 	$(eval OUT_BIN_DIR:=./bin)
+	$(eval AR?=ar)
+	$(eval NASM?=nasm)
 endef
 
 ### Macros for 3rd-party libraries registration
@@ -27,10 +30,14 @@ define ADD_ZLIB_NG
 	$(eval ZLIB_DIR:=$(1))
 	$(eval ZLIB_A_DIR:=$(1)/build-g++/zlib-ng)
 	$(eval ZLIB_A:=$(ZLIB_A_DIR)/libz.a)
-	$(eval INCLUDE_DIRS+=-I$(ZLIB_DIR)/build-g++)
+	$(eval INCLUDE_DIRS+=-I$(ZLIB_DIR)/build-g++ -I$(ZLIB_DIR)/build-g++/zlib-ng)
 	$(eval LIBRARY_FILES+=$(ZLIB_A))
 	$(eval LINKER_DIRS+=-L $(ZLIB_A_DIR))
 	$(eval PREBUILD_JOBS+=zlib-ng)
+
+	$(eval zlib-ng: $(ZLIB_A))
+	$(eval $(ZLIB_A) : ; \
+		cd $(ZLIB_DIR) && cmake $(CMAKE_OSX_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build-g++/zlib-ng -S . -DZLIB_COMPAT=ON; cmake --build build-g++/zlib-ng --config Release)
 endef
 
 # Propose zlib-ng (to be considered by CHOOSE_...)
@@ -39,6 +46,10 @@ define PROPOSE_ZLIB_NG
 	$(eval ZLIB_DIR:=$(1))
 	$(eval ZLIB_A_DIR:=$(1)/build-g++/zlib-ng)
 	$(eval ZLIB_A:=$(ZLIB_A_DIR)/libz.a)
+
+	$(eval zlib-ng: $(ZLIB_A))
+	$(eval $(ZLIB_A) : ; \
+		cd $(ZLIB_DIR) && cmake $(CMAKE_OSX_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build-g++/zlib-ng -S . -DZLIB_COMPAT=ON; cmake --build build-g++/zlib-ng --config Release)
 endef
 
 # Propose isa-l (to be considered by CHOOSE_...)
@@ -47,6 +58,10 @@ define PROPOSE_ISAL
 	$(eval ISAL_DIR:=$(1))
 	$(eval ISAL_A_DIR:=$(1)/bin)
 	$(eval ISAL_A:=$(1)/bin/isa-l.a)
+
+	$(eval isa-l: $(ISAL_A))
+	$(eval $(ISAL_A) : ; \
+		cd $(ISAL_DIR) && $(MAKE) -f Makefile.unx)
 endef
 
 # Add libdeflate
@@ -60,9 +75,13 @@ define ADD_LIBDEFLATE
 	$(eval LINKER_DIRS+=-L $(LIBDEFLATE_A_DIR))
 	$(call TEST_SOFT,cmake)
 	$(eval PREBUILD_JOBS+=libdeflate)
+
+	$(eval libdeflate: $(LIBDEFLATE_A))
+	$(eval $(LIBDEFLATE_A): ; \
+		cd $(LIBDEFLATE_DIR) && cmake $(CMAKE_OSX_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -DLIBDEFLATE_BUILD_SHARED_LIB=OFF -DLIBDEFLATE_BUILD_GZIP=OFF -B build && cmake --build build)
 endef
 
-# Add zstd	(!!! CHECK)
+# Add zstd
 define ADD_LIBZSTD
 	$(info *** Adding libzstd ***)
 	$(eval INCLUDE_DIRS+=-I$(1))
@@ -72,6 +91,10 @@ define ADD_LIBZSTD
 	$(eval LIBRARY_FILES+=$(LIBZSTD_A))
 	$(eval LINKER_DIRS+=-L $(LIBZSTD_A_DIR))
 	$(eval PREBUILD_JOBS+=libzstd)
+
+	$(eval libzstd: $(LIBZSTD_A))
+	$(eval $(LIBZSTD_A): ; \
+		cd $(LIBZSTD_DIR) && $(MAKE))
 endef
 
 # Add mimalloc
@@ -82,6 +105,12 @@ define ADD_MIMALLOC
 	$(eval MIMALLOC_DIR:=$(1))
 	$(eval MIMALLOC_OBJ:=$(1)/mimalloc.o)
 	$(eval PREBUILD_JOBS+=mimalloc_obj)
+
+	$(eval mimalloc_obj: $(MIMALLOC_OBJ))
+	$(eval $(MIMALLOC_OBJ): ; \
+		$(CXX) -DMI_MALLOC_OVERRIDE -O3 -DNDEBUG -fPIC -Wall -Wextra -Wno-unknown-pragmas \
+		-fvisibility=hidden -ftls-model=initial-exec -fno-builtin-malloc -c -I $(MIMALLOC_INCLUDE_DIR) \
+		$(MIMALLOC_DIR)/src/static.c -o $(MIMALLOC_OBJ))
 endef
 
 # Add cdflib
@@ -92,17 +121,24 @@ define ADD_CDFLIB
 	$(eval CDFLIB_DIR:=$(1))
 	$(eval CDFLIB_OBJ:=$(1)/cdflib.cpp.o)
 	$(eval PREBUILD_JOBS+=cdflib_obj)
+
+	$(eval cdflib_obj: $(CDFLIB_OBJ))
+	$(eval $(CDFLIB_OBJ): ; \
+		cd $(CDFLIB_DIR) && $(CXX) $(CPP_FLAGS) $(OPTIMIZATION_FLAGS) $(DEFINE_FLAGS) $(INCLUDE_DIRS) -c cdflib.cpp -o cdflib.cpp.o)
 endef
 
 # Add REFRESH - parallel queues monitor
 define ADD_REFRESH_PARALLEL_QUEUES_MONITOR
 	$(info *** Adding refresh - parallel queues monitor ***)
-	$(eval ADD_REFRESH_PARALLEL_QUEUES_MONITOR_DIR:=$(1)/refresh/parallel_queues/lib/)
-	$(eval ADD_REFRESH_PARALLEL_QUEUES_MONITOR_OBJ:=$(1)/refresh/parallel_queues/lib/parallel-queues-monitor.cpp.o)
+	$(eval REFRESH_PARALLEL_QUEUES_MONITOR_DIR:=$(1)/refresh/parallel_queues/lib/)
+	$(eval REFRESH_PARALLEL_QUEUES_MONITOR_OBJ:=$(1)/refresh/parallel_queues/lib/parallel-queues-monitor.cpp.o)
 	$(eval PREBUILD_JOBS+=refresh_parallel_queues_monitor_obj)
+	$(eval refresh_parallel_queues_monitor_obj: $(REFRESH_PARALLEL_QUEUES_MONITOR_OBJ))
+	$(eval $(REFRESH_PARALLEL_QUEUES_MONITOR_OBJ): ; \
+		cd $(REFRESH_PARALLEL_QUEUES_MONITOR_DIR) && $(CXX) $(CPP_FLAGS) $(OPTIMIZATION_FLAGS) $(DEFINE_FLAGS) $(INCLUDE_DIRS) -c parallel-queues-monitor.cpp -o parallel-queues-monitor.cpp.o)
 endef
 
-# Add RADULS-inplace (!!! CHECK)
+# Add RADULS-inplace
 define ADD_RADULS_INPLACE
 	$(info *** Adding raduls-inplace ***)
 	$(eval INCLUDE_DIRS+=-I$(1)/Raduls)
@@ -112,6 +148,10 @@ define ADD_RADULS_INPLACE
 	$(eval LIBRARY_FILES+=$(RADULS_INPLACE_A))
 	$(eval LINKER_DIRS+=-L $(RADULS_INPLACE_A_DIR))
 	$(eval PREBUILD_JOBS+=raduls-inplace)
+
+	$(eval raduls-inplace: $(RADULS_INPLACE_A))
+	$(eval $(RADULS_INPLACE_A) : ; \
+		cd $(RADULS_INPLACE_DIR) && $(MAKE))
 endef
 
 # Add igraph
@@ -128,6 +168,14 @@ define ADD_IGRAPH
 	$(call TEST_SOFT,bison)
 	$(call TEST_SOFT,flex)
 	$(eval PREBUILD_JOBS+=igraph)
+
+	$(eval igraph: $(IGRAPH_A))
+	$(eval $(IGRAPH_A): ; \
+		$(if $(filter Darwin,$(OS_TYPE)), \
+			$(eval IEEE754_DOUBLE_ENDIANNESS_MATCHES_FIX:=-DIEEE754_DOUBLE_ENDIANNESS_MATCHES=TRUE), \
+			$(eval IEEE754_DOUBLE_ENDIANNESS_MATCHES_FIX:=) \
+		) \
+		mkdir -p $(IGRAPH_DIR)/build && cmake $(CMAKE_OSX_FIX) $(IEEE754_DOUBLE_ENDIANNESS_MATCHES_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -S $(IGRAPH_DIR) -B $(IGRAPH_DIR)/build && cmake --build $(IGRAPH_DIR)/build )
 endef
 
 # Add SBWT
@@ -143,6 +191,21 @@ define ADD_SBWT
 	$(eval LIBRARY_FILES+=$(SBWT_A) $(SBWT_SDSL_A) $(SBWT_KMC_CORE_A) $(SBWT_KMC_TOOLS_A))
 	$(eval LINKER_DIRS+=-L $(SBWT_A_DIR))
 	$(eval PREBUILD_JOBS+=sbwt)
+
+	$(eval sbwt: $(SBWT_A) $(SBWT_SDSL_A) $(SBWT_KMC_CORE_A) $(SBWT_KMC_TOOLS_A))
+	$(eval $(SBWT_A): ; \
+		mkdir -p $(SBWT_DIR)/build && cd $(SBWT_DIR)/build && cmake $(CMAKE_OSX_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) .. -DMAX_KMER_LENGTH=32 && $(MAKE) -j)
+	$(eval $(SBWT_SDSL_A) : $(SBWT_A))
+	$(eval $(SBWT_KMC_CORE_A) : $(SBWT_A))
+	$(eval $(SBWT_KMC_TOOLS_A) : $(SBWT_A))
+endef
+
+# Add Pybind11
+define ADD_PYBIND11
+	$(eval PYBIND11_DIR:=$(1))
+	$(eval INCLUDE_DIRS+=-I$(PYBIND11_DIR))
+	$(eval INCLUDE_DIRS+=-I $(shell python3 -c "import sysconfig;print(sysconfig.get_paths()['include'])"))
+	$(eval PY_EXTENSION_SUFFIX:=$(shell python3-config --extension-suffix))
 endef
 
 # Add REFRESH libs
@@ -203,6 +266,21 @@ endef
 define ADD_EIGEN_LIB
 	$(info *** Adding Eigen lib ***)
 	$(eval INCLUDE_DIRS+=-I$(1))
+endef
+
+# Add NASM
+# Idea is that if in Makefile ADD_NASM is called it will override the system one
+define ADD_NASM
+	$(info *** Adding NASM ***)
+	$(eval export PATH := $(abspath $(1)):$(PATH))
+	$(if $(filter x86_64,$(ARCH_TYPE)), \
+		$(eval dummy_install_nasm:=$(shell \
+			if [ ! -f $(1)/nasm ]; then \
+				cd $(1) && ./autogen.sh && ./configure && $(MAKE) -j; \
+			fi) \
+		) \
+		$(eval NASM:=$(1)/nasm) \
+	)
 endef
 
 ### Macros configuring compiler/linker flags
@@ -288,7 +366,7 @@ $(eval OBJ_$(1) := $(patsubst $(SRC_$(1)_DIR)/%.cpp, $(OBJ_$(1)_DIR)/%.cpp.o, $(
 # Compilation rule
 $(OBJ_$(1)_DIR)/%.cpp.o: $(SRC_$(1)_DIR)/%.cpp | prebuild
 	mkdir -p $(OBJ_$(1)_DIR)
-	$(CXX) $(CPP_FLAGS) $(OPTIMIZATION_FLAGS) $(ARCH_FLAGS) $(DEFINE_FLAGS) $(INCLUDE_DIRS) -MMD -MF $$@.d -c $$< -o $$@
+	$(CXX) $(3) $(CPP_FLAGS) $(OPTIMIZATION_FLAGS) $(ARCH_FLAGS) $(DEFINE_FLAGS) $(INCLUDE_DIRS) -MMD -MF $$@.d -c $$< -o $$@
 # Dependency files
 -include $(OBJ_$(1):.o=.o.d)
 endef
@@ -354,6 +432,8 @@ define SET_FLAGS
 	$(eval C_FLAGS+=-std=$(C_STD) -Wall -fPIC -pthread -fpermissive $(PLATFORM_SPECIFIC_C_FLAGS))
 	$(eval CPP_FLAGS+=-std=$(CPP_STD) -Wall -fPIC -pthread -fpermissive $(PLATFORM_SPECIFIC_CPP_FLAGS))
 	$(eval LINKER_FLAGS+=-lm -lpthread $(PLATFORM_SPECIFIC_LINKER_FLAGS) $(STATIC_LFLAGS))
+	$(eval PY_FLAGS:=-Wl,-undefined,dynamic_lookup -shared)
+
 
 	$(if $(filter release,$(1)), \
 		$(eval OPTIMIZATION_FLAGS+=-O3) \
@@ -405,14 +485,14 @@ define SET_FLAGS
 
 	$(eval INCLUDE_DIRS+=$(REFRESH_DIR))
 	$(info Prebuild jobs: $(PREBUILD_JOBS))
-prebuild: $(PREBUILD_JOBS)
+prebuild: 
+	$(PREBUILD_JOBS)
 endef
-
 
 ### Macros checking system and software
 # Check for NASM
 define CHECK_NASM
-	$(eval NASM_VERSION:=$(shell nasm --version 2>/dev/null))
+	$(eval NASM_VERSION:=$(shell $(NASM) --version 2>/dev/null))
 endef
 
 # Choose lib for gzip decompression
@@ -424,11 +504,11 @@ define CHOOSE_GZIP_DECOMPRESSION
 			$(eval INCLUDE_DIRS+=-I$(ISAL_DIR)/include) ,\
 			$(eval GZ_TARGET:=zlib-ng) \
 			$(eval PREBUILD_JOBS+=zlib-ng) \
-			$(eval INCLUDE_DIRS+=-I$(ZLIB_DIR)/build-g++) \
+			$(eval INCLUDE_DIRS+=-I$(ZLIB_DIR)/build-g++ -I$(ZLIB_DIR)/build-g++/zlib-ng) \
 		), \
 		$(eval GZ_TARGET:=zlib-ng) \
 		$(eval PREBUILD_JOBS+=zlib-ng) \
-		$(eval INCLUDE_DIRS+=-I$(ZLIB_DIR)/build-g++) \
+		$(eval INCLUDE_DIRS+=-I$(ZLIB_DIR)/build-g++ -I$(ZLIB_DIR)/build-g++/zlib-ng) \
   	)
 
 	$(if $(filter isa-l,$(GZ_TARGET)), \
@@ -487,50 +567,30 @@ define CHECK_OS_ARCH
 		$(eval CMAKE_OSX_FIX:=-DCMAKE_OSX_SYSROOT=$(SDK_PATH)) \
 	)
 
+	$(if $(filter Darwin,$(OS_TYPE)), \
+		$(eval AR_OPT:=-rcs) \
+		$(eval PY_AGC_API_CFLAGS:=-Wl,-undefined,dynamic_lookup -fPIC -Wall -shared -std=c++14 -O3), \
+		$(eval AR_OPT:=rcs -o) \
+		$(eval PY_AGC_API_CFLAGS:=-fPIC -Wall -shared -std=c++14 -O3) \
+	)
 endef
 
 # Load submodules if necessary
-define INIT_SUBMODULES
-	$(info *** Initialization of submodules ***)
-	$(eval dummy:=$(shell git submodule update --init --recursive))
+#	$(eval dummy:=$(shell git submodule update --init --recursive))
+
+define INIT_SUBMODULES_FAST
+	$(info *** Initialization of submodules (fast) ***)
+	$(if $(shell git submodule status | grep '^-'), \
+		$(info Initializing and updating submodules...) \
+		$(eval dummy:=$(shell git submodule update --init --recursive --jobs=8)), \
+		$(info Submodules are already up-to-date or none exist.)
+	)
 endef
 
-
-### Library targets
-zlib-ng:
-	cd $(ZLIB_DIR) && cmake $(CMAKE_OSX_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build-g++/zlib-ng -S . -DZLIB_COMPAT=ON; cmake --build build-g++/zlib-ng --config Release
-
-isa-l:
-	cd $(ISAL_DIR) && $(MAKE) -f Makefile.unx
-
-libdeflate:
-	cd $(LIBDEFLATE_DIR) && cmake $(CMAKE_OSX_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -DLIBDEFLATE_BUILD_SHARED_LIB=OFF -DLIBDEFLATE_BUILD_GZIP=OFF -B build && cmake --build build
-
-libzstd:
-	cd $(LIBZSTD_DIR) && $(MAKE)
-
-raduls-inplace:
-	cd $(RADULS_DIR) && $(MAKE)
-
-igraph:
-	$(if $(filter Darwin,$(OS_TYPE)), \
-		$(eval IEEE754_DOUBLE_ENDIANNESS_MATCHES_FIX:=-DIEEE754_DOUBLE_ENDIANNESS_MATCHES=TRUE), \
-		$(eval IEEE754_DOUBLE_ENDIANNESS_MATCHES_FIX:=) \
-	)
-	-mkdir $(IGRAPH_DIR)/build && cmake $(CMAKE_OSX_FIX) $(IEEE754_DOUBLE_ENDIANNESS_MATCHES_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -S $(IGRAPH_DIR) -B $(IGRAPH_DIR)/build && cmake --build $(IGRAPH_DIR)/build
-
-mimalloc_obj:
-	cd $(MIMALLOC_DIR) && $(CXX) -DMI_MALLOC_OVERRIDE -O3 -DNDEBUG -fPIC -Wall -Wextra -Wno-unknown-pragmas -fvisibility=hidden -ftls-model=initial-exec -fno-builtin-malloc -c -I include src/static.c -o mimalloc.o
-
-cdflib_obj:
-	cd $(CDFLIB_DIR) && $(CXX) $(CPP_FLAGS) $(OPTIMIZATION_FLAGS) $(DEFINE_FLAGS) $(INCLUDE_DIRS) -c cdflib.cpp -o cdflib.cpp.o
-
-refresh_parallel_queues_monitor_obj:
-	cd $(ADD_REFRESH_PARALLEL_QUEUES_MONITOR_DIR) && $(CXX) $(CPP_FLAGS) $(OPTIMIZATION_FLAGS) $(DEFINE_FLAGS) $(INCLUDE_DIRS) -c parallel-queues-monitor.cpp -o parallel-queues-monitor.cpp.o
-
-sbwt:
-	-mkdir $(SBWT_DIR)/build &&	cd $(SBWT_DIR)/build && cmake $(CMAKE_OSX_FIX) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) .. -DMAX_KMER_LENGTH=32 && $(MAKE) -j
-
+define INIT_SUBMODULES
+	$(info *** Initialization of submodules ***)
+	$(eval dummy:=$(shell git submodule update --init --recursive --jobs=8))
+endef
 
 ### Clean library targets
 clean-zlib-ng:
@@ -546,7 +606,7 @@ clean-libzstd:
 	-cd $(LIBZSTD_DIR) && $(MAKE) clean
 
 clean-raduls-inplace:
-	-cd $(RADULS_DIR) && $(MAKE) clean
+	-cd $(RADULS_INPLACE_DIR) && $(MAKE) clean
 
 clean-igraph:
 	-rm -r $(IGRAPH_DIR)/build
