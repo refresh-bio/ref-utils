@@ -265,7 +265,7 @@ void process_mrds()
 	parallel_priority_queue<input_part_t> q_partitioned_parts(params.input_queue_max_size, 1);
 	parallel_priority_queue<packed_part_t> q_packed_parts(params.input_queue_max_size, n_packing_threads);
 
-	size_t no_unique, no_duplicated, no_removed, no_stored;
+	size_t no_unique = 0, no_duplicated = 0, no_removed = 0, no_stored = 0;
 
 	thread t_data_source([&q_input_parts] {
 		CDataSource data_source(params.in_names, params.in_prefixes, q_input_parts, params.remove_empty_lines, params.data_source_input_parts_size, params.soft_limit_size_in_part);
@@ -317,7 +317,7 @@ void process_mrds()
 	t_data_storer.join();
 
 	std::cerr << "*** Stats" << endl;
-	std::cerr << "No. input sequences: " << no_unique + no_duplicated + no_removed << endl;
+	std::cerr << "No. input sequences: " << (params.remove_duplicates ? (no_unique + no_duplicated + no_removed) : no_stored) << endl;
 	if (params.remove_duplicates)
 	{
 		std::cerr << "   unique          : " << no_unique << endl;
@@ -327,7 +327,7 @@ void process_mrds()
 	}
 
 	if(params.out_name.empty())
-		std::cerr << "No. parts          : " << (no_stored + params.n - 1) / params.n;
+		std::cerr << "No. parts          : " << (no_stored + params.n - 1) / params.n << endl;
 }
 
 // *****************************************************************************************

@@ -75,6 +75,16 @@ public:
 
 		while (q_packed_parts.pop(input_part))
 		{
+			if (!out)
+			{
+				if (!open_file(out, part_fn()))
+					return false;
+
+				if (verbosity > 0)
+					cerr << "Part: " << part_id << "\r";
+
+			}
+
 			fwrite(input_part.memory_block.data(), 1, input_part.memory_block.size(), out);
 			curr_part_size += input_part.no_items;
 
@@ -85,11 +95,7 @@ public:
 				fclose(out);
 				++part_id;
 
-				if (!open_file(out, part_fn()))
-					return false;
-
-				if (verbosity > 0)
-					cerr << "Part: " << part_id << "\r";
+				out = nullptr;
 
 				curr_part_size = 0;
 			}
