@@ -12,8 +12,8 @@
 
 using namespace std;
 
-const string UTIL_VER = "mfasta-tool v. 1.0.2 (2024-10-30)";
-const string UTIL_VERSION = "1.0.2";
+const string UTIL_VER = "mfasta-tool v. 1.0.3 (2024-11-29)";
+const string UTIL_VERSION = "1.0.3";
 
 CParams params;
 
@@ -79,7 +79,7 @@ bool parse_args_mrds(int argc, char **argv)
 			params.n = atoi(argv[i + 1]);
 			++i;
 		}
-		if ((argv[i] == "-t"s || argv[i] == "--no-threads"s) && i + 1 < argc)
+		else if ((argv[i] == "-t"s || argv[i] == "--no-threads"s) && i + 1 < argc)
 		{
 			params.no_threads = atoi(argv[i + 1]);
 			if(params.no_threads < 3)
@@ -218,7 +218,7 @@ void usage_mrds()
 	std::cerr << "   --rev-comp-as-equivalent      - when removing duplicates treat rev. comp. as equivalent (default: false)\n";
 	std::cerr << "   --out-duplicates <string>     - name of files with duplicates list (default: stdout)\n";
 	std::cerr << "   --mark-duplicates-orientation - mark duplicates orientation ('+' for direct, '-' for rev.comp) (default: false)\n";
-	std::cerr << "Example: mfasta-tool -n 1000 bacteria.fna\n";
+	std::cerr << "Example: mfasta-tool mrds -n 1000 -i bacteria.fna\n";
 }
 
 // **************************************************
