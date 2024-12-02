@@ -351,7 +351,7 @@ int main(int argc, char** argv)
 	if (!parse_mode(argc, argv))
 	{
 		usage();
-		return 1;
+		return 0;
 	}
 
 	switch (params.working_mode)
