@@ -8,7 +8,7 @@ using namespace std;
 
 struct CParams
 {
-	enum class working_mode_t { none, mrds };
+	enum class working_mode_t { none, info, mrds };
 
 	working_mode_t working_mode = working_mode_t::none;
 	vector<string> in_names;

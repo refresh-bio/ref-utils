@@ -60,6 +60,7 @@ bool parse_mode(int argc, char** argv)
 
 	if (argv[1] == "--version"s)
 	{
+		params.working_mode = CParams::working_mode_t::info;
 		std::cerr << UTIL_VERSION << endl;
 		return true;
 	}
@@ -370,6 +371,8 @@ int main(int argc, char** argv)
 		if (!process_mrds())
 			return 1;
 		break;
+	case CParams::working_mode_t::info:
+		return 0;
 	default:
 		return 1;
 	}
