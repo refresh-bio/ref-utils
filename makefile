@@ -1,4 +1,4 @@
-all: mfasta-tool multi-fasta-split
+all: mfasta-tool
 
 # *** REFRESH makefile utils
 include refresh.mk
@@ -36,19 +36,8 @@ endif
 
 # *** Source files and rules
 $(eval $(call PREPARE_DEFAULT_COMPILE_RULE,MFASTA_TOOL,mfasta-tool))
-$(eval $(call PREPARE_DEFAULT_COMPILE_RULE,MULTI_FASTA_SPLIT,multi-fasta-split))
 
 # *** Targets
-multi-fasta-split: $(OUT_BIN_DIR)/multi-fasta-split
-
-$(OUT_BIN_DIR)/multi-fasta-split: $(GZ_TARGET) mimalloc_obj libdeflate \
-	$(OBJ_MULTI_FASTA_SPLIT) 
-	-mkdir -p $(OUT_BIN_DIR)	
-	$(CXX) -o $@  \
-	$(MIMALLOC_OBJ) \
-	$(OBJ_MULTI_FASTA_SPLIT) \
-	$(LIBRARY_FILES) $(LINKER_FLAGS) $(LINKER_DIRS)
-
 mfasta-tool:  $(OUT_BIN_DIR)/mfasta-tool
 
 $(OUT_BIN_DIR)/mfasta-tool: $(GZ_TARGET) mimalloc_obj libdeflate \

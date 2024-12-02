@@ -214,7 +214,7 @@ class CSHA256Filter
 			{
 				if (is_first)
 				{
-					ofs << di.second;
+					ofs << string_view(di.second.begin() + 1, di.second.end());
 					is_first = false;
 					is_first_fwd = di.first;
 				}
@@ -223,7 +223,7 @@ class CSHA256Filter
 					ofs << " ";
 					if (mark_duplicates_orientation)
 						ofs << ((is_first_fwd ^ di.first) ? "+" : "-");
-					ofs << di.second;
+					ofs << string_view(di.second.begin() + 1, di.second.end());
 				}
 			}
 
