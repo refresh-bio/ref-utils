@@ -17,7 +17,7 @@ struct CParams
 	string out_prefix = "part";
 	string out_suffix = "fna";
 	bool gzipped_output = false;
-	int gzip_level = 6;
+	int gzip_level = 4;
 	int64_t n = 0;
 	int part_digits = 5;
 	bool remove_empty_lines = true;
