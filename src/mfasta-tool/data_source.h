@@ -41,8 +41,9 @@ class CDataSource
 
 		while (!sdf.eof())
 		{
-			if (sdf.getline(line) == 0)
+			if (!sdf.eof())
 			{
+				sdf.getline(line);
 				if (line.empty())
 				{
 					if (!remove_empty_lines)

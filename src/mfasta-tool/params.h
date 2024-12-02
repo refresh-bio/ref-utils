@@ -20,7 +20,7 @@ struct CParams
 	int gzip_level = 6;
 	int64_t n = 0;
 	int part_digits = 5;
-	bool remove_empty_lines = false;
+	bool remove_empty_lines = true;
 	int no_threads = 4;
 	int verbosity = 0;
 

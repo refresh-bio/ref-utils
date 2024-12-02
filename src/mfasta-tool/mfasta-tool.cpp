@@ -120,10 +120,10 @@ bool parse_args_mrds(int argc, char **argv)
 			params.verbosity = atoi(argv[i + 1]);
 			++i;
 		}
-		else if (argv[i] == "--remove-empty-lines"s)
+/*		else if (argv[i] == "--remove-empty-lines"s)
 		{
 			params.remove_empty_lines = true;
-		}
+		}*/
 		else if (argv[i] == "--remove-duplicates"s)
 		{
 			params.remove_duplicates = true;
@@ -213,7 +213,7 @@ void usage_mrds()
 	std::cerr << "   --gzipped-output              - gzip ouptut files (default: false)\n";
 	std::cerr << "   --gzip-level <int>            - compression level for output gzips (default: " << params.gzip_level << ")\n";
 	std::cerr << "   --verbosity <int>             - verbosity level (default: " << params.verbosity << ")\n";
-	std::cerr << "   --remove-empty-lines          - remove empty lines\n";
+//	std::cerr << "   --remove-empty-lines          - remove empty lines\n";
 	std::cerr << "   --remove-duplicates           - remove duplicated sequences (same SHA256 checksum) (default: false)\n";
 	std::cerr << "   --rev-comp-as-equivalent      - when removing duplicates treat rev. comp. as equivalent (default: false)\n";
 	std::cerr << "   --out-duplicates <string>     - name of files with duplicates list (default: stdout)\n";
