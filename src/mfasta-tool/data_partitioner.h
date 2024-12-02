@@ -17,7 +17,7 @@ public:
 		n_in_part(n_in_part)
 	{}
 
-	void run()
+	bool run()
 	{
 		input_part_t input_part;
 		input_part_t partitioned_part;
@@ -53,5 +53,7 @@ public:
 			q_partitioned_parts.push(priority, move(partitioned_part));
 
 		q_partitioned_parts.mark_completed();
+
+		return true;
 	}
 };

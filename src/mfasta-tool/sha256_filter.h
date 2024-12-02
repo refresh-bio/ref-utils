@@ -132,7 +132,7 @@ public:
 		bases_mapping['t'] = 'a';
 	}
 
-	void run()
+	bool run()
 	{
 		uint64_t priority;
 		input_part_t input_part;
@@ -147,6 +147,8 @@ public:
 		}
 
 		q_hashed_parts.mark_completed();
+
+		return true;
 	}
 };
 

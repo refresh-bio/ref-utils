@@ -19,6 +19,7 @@ class CDataSource
 	size_t soft_limit_size_in_part;
 	bool remove_empty_lines;
 	uint64_t priority = 0;
+	uint32_t verbosity;
 
 	input_part_t input_buffer;
 
@@ -26,7 +27,8 @@ class CDataSource
 	{
 		stream_in_file msgz(fn);
 
-		cerr << "Processing " << fn << endl;
+		if(verbosity > 0)
+			cerr << "Processing " << fn << endl;
 
 		if (!msgz.is_open())
 		{
@@ -81,19 +83,22 @@ class CDataSource
 			q_input_parts.push(priority++, move(input_buffer));
 		}
 
-		cerr << "Processed " << fn << " - " << no_seqs << " sequences " << endl;
+		if (verbosity > 0)
+			cerr << "Processed " << fn << " - " << no_seqs << " sequences " << endl;
 
 		return true;
 	}
 
 public:
-	CDataSource(const vector<string>& input_names, const vector<string>& input_prefixes, parallel_priority_queue<input_part_t> &q_input_parts, bool remove_empty_lines, const size_t no_seq_in_part, const size_t soft_limit_size_in_part) :
+	CDataSource(const vector<string>& input_names, const vector<string>& input_prefixes, parallel_priority_queue<input_part_t> &q_input_parts, bool remove_empty_lines, const size_t no_seq_in_part, const size_t soft_limit_size_in_part,
+		const uint32_t verbosity) :
 		input_names(input_names),
 		input_prefixes(input_prefixes),
 		q_input_parts(q_input_parts),
 		remove_empty_lines(remove_empty_lines),
 		no_seq_in_part(no_seq_in_part),
-		soft_limit_size_in_part(soft_limit_size_in_part)
+		soft_limit_size_in_part(soft_limit_size_in_part),
+		verbosity(verbosity)
 	{
 	}
 

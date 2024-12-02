@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstring>
 #include <thread>
+#include <atomic>
 
 #include "params.h"
 #include "data_source.h"
@@ -12,8 +13,8 @@
 
 using namespace std;
 
-const string UTIL_VER = "mfasta-tool v. 1.0.3 (2024-11-29)";
-const string UTIL_VERSION = "1.0.3";
+const string UTIL_VER = "mfasta-tool v. 1.0.4 (2024-12-02)";
+const string UTIL_VERSION = "1.0.4";
 
 CParams params;
 
@@ -21,7 +22,7 @@ CParams params;
 bool parse_mode(int argc, char** argv);
 bool parse_args_mrds(int argc, char** argv);
 void usage();
-void process_mrds();
+bool process_mrds();
 vector<string> split(const string& str, char sep);
 
 // ****************************************************************************
@@ -222,13 +223,15 @@ void usage_mrds()
 }
 
 // **************************************************
-void process_mrds()
+bool process_mrds()
 {
 	uint32_t n_hashing_threads = 1;
 	uint32_t n_packing_threads = 1;
 	uint32_t n_min_threads = params.remove_duplicates ? 6 : 4;
 
 	uint32_t n_threads = std::max<uint32_t>(n_min_threads, params.no_threads);
+	atomic<bool> is_ok = true;
+
 
 	if (params.remove_duplicates && params.gzipped_output)
 	{
@@ -267,43 +270,49 @@ void process_mrds()
 
 	size_t no_unique = 0, no_duplicated = 0, no_removed = 0, no_stored = 0;
 
-	thread t_data_source([&q_input_parts] {
-		CDataSource data_source(params.in_names, params.in_prefixes, q_input_parts, params.remove_empty_lines, params.data_source_input_parts_size, params.soft_limit_size_in_part);
-		data_source.run();
+	thread t_data_source([&is_ok, &q_input_parts] {
+		CDataSource data_source(params.in_names, params.in_prefixes, q_input_parts, params.remove_empty_lines, params.data_source_input_parts_size, params.soft_limit_size_in_part, params.verbosity);
+		if(!data_source.run())
+			is_ok = false;
 		});
 
 	vector<thread> vt_sha256_hashers;
 	if (params.remove_duplicates)
 		for (int i = 0; i < n_hashing_threads; ++i)
-			vt_sha256_hashers.emplace_back([&q_input_parts, &q_hashed_parts] {
+			vt_sha256_hashers.emplace_back([&is_ok, &q_input_parts, &q_hashed_parts] {
 			CSHA256Hasher part_hasher(q_input_parts, q_hashed_parts, params.rev_comp_as_equivalent);
-			part_hasher.run();
+			if(!part_hasher.run())
+				is_ok = false;
 				});
 
-	thread t_sha256_filter([&q_hashed_parts, &q_filtered_parts, &no_unique, &no_duplicated, &no_removed] {
+	thread t_sha256_filter([&is_ok, &q_hashed_parts, &q_filtered_parts, &no_unique, &no_duplicated, &no_removed] {
 		if (params.remove_duplicates)
 		{
 			CSHA256Filter sha256_filter(params.rev_comp_as_equivalent, params.mark_duplicates_orientation, q_hashed_parts, q_filtered_parts, params.out_duplicates, params.data_source_input_parts_size);
-			sha256_filter.run();
+			if(!sha256_filter.run())
+				is_ok = false;
 			sha256_filter.get_stats(no_unique, no_duplicated, no_removed);
 		}
 		});
 
-	thread t_data_partitioner([&q_input_parts, &q_filtered_parts, &q_partitioned_parts] {
+	thread t_data_partitioner([&is_ok, &q_input_parts, &q_filtered_parts, &q_partitioned_parts] {
 		CDataPartitioner data_partitioner(params.remove_duplicates ? q_filtered_parts : q_input_parts, q_partitioned_parts, params.n);
-		data_partitioner.run();
+		if(!data_partitioner.run())
+			is_ok = false;
 	});
 
 	vector<thread> vt_data_packers;
 	for (int i = 0; i < n_packing_threads; ++i)
-		vt_data_packers.emplace_back([&q_partitioned_parts, &q_packed_parts] {
+		vt_data_packers.emplace_back([&is_ok, &q_partitioned_parts, &q_packed_parts] {
 		CPartPacker part_packer(q_partitioned_parts, q_packed_parts, params.gzipped_output, params.gzip_level);
-		part_packer.run();
+		if(!part_packer.run())
+			is_ok = false;
 			});
 
-	thread t_data_storer([&q_packed_parts, &no_stored] {
+	thread t_data_storer([&is_ok, &q_packed_parts, &no_stored] {
 		CDataStorer data_storer(q_packed_parts, params.n, params.out_name, params.out_prefix, params.out_suffix, params.part_digits, params.verbosity);
-		data_storer.run();
+		if(!data_storer.run())
+			is_ok = false;
 		data_storer.get_stats(no_stored);
 		});
 
@@ -316,18 +325,23 @@ void process_mrds()
 		t.join();
 	t_data_storer.join();
 
-	std::cerr << "*** Stats" << endl;
-	std::cerr << "No. input sequences: " << (params.remove_duplicates ? (no_unique + no_duplicated + no_removed) : no_stored) << endl;
-	if (params.remove_duplicates)
+	if (params.verbosity > 0)
 	{
-		std::cerr << "   unique          : " << no_unique << endl;
-		std::cerr << "   duplicated      : " << no_duplicated << endl;
-		std::cerr << "   removed         : " << no_removed << endl;
-		std::cerr << "   preserved       : " << no_stored << endl;
+		std::cerr << "*** Stats" << endl;
+		std::cerr << "No. input sequences: " << (params.remove_duplicates ? (no_unique + no_duplicated + no_removed) : no_stored) << endl;
+		if (params.remove_duplicates)
+		{
+			std::cerr << "   unique          : " << no_unique << endl;
+			std::cerr << "   duplicated      : " << no_duplicated << endl;
+			std::cerr << "   removed         : " << no_removed << endl;
+			std::cerr << "   preserved       : " << no_stored << endl;
+		}
+
+		if (params.out_name.empty())
+			std::cerr << "No. parts          : " << (no_stored + params.n - 1) / params.n << endl;
 	}
 
-	if(params.out_name.empty())
-		std::cerr << "No. parts          : " << (no_stored + params.n - 1) / params.n << endl;
+	return is_ok;
 }
 
 // *****************************************************************************************
@@ -336,7 +350,7 @@ int main(int argc, char** argv)
 	if (!parse_mode(argc, argv))
 	{
 		usage();
-		return 0;
+		return 1;
 	}
 
 	switch (params.working_mode)
@@ -345,7 +359,7 @@ int main(int argc, char** argv)
 		if (!parse_args_mrds(argc, argv))
 		{
 			usage_mrds();
-			return 0;
+			return 1;
 		}
 		break;
 	}
@@ -353,8 +367,11 @@ int main(int argc, char** argv)
 	switch (params.working_mode)
 	{
 	case CParams::working_mode_t::mrds:
-		process_mrds();
+		if (!process_mrds())
+			return 1;
 		break;
+	default:
+		return 1;
 	}
 
 	return 0;

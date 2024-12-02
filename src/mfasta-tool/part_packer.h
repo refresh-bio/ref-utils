@@ -81,7 +81,7 @@ public:
 		gim(gzip_level)
 	{}
 
-	void run()
+	bool run()
 	{
 		input_part_t input_part;
 		uint64_t priority;
@@ -95,5 +95,7 @@ public:
 		}
 
 		q_packed_parts.mark_completed();
+
+		return true;
 	}
 };
